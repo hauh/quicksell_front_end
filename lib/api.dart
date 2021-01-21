@@ -25,6 +25,8 @@ Future<List<Listing>> getListings(int page) async {
     List<Listing> listings = [];
     decoded.forEach((element) => listings.add(Listing.fromJson(element)));
     return listings;
+  } else if (response.statusCode == 404) {
+    return [];
   } else {
     throw Exception('Failed to load.');
   }
