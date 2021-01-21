@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:quicksell_app/chats.dart';
-import 'package:quicksell_app/create.dart';
-import 'package:quicksell_app/feed.dart';
-import 'package:quicksell_app/profile.dart';
-import 'package:quicksell_app/search.dart';
+import 'package:quicksell_app/api.dart' as api;
+import 'package:quicksell_app/chats.dart' show Chats;
+import 'package:quicksell_app/create.dart' show CreateListing;
+import 'package:quicksell_app/feed.dart' show Feed;
+import 'package:quicksell_app/profile.dart' show Profile;
+import 'package:quicksell_app/search.dart' show Search;
 
 void main() => runApp(QuicksellApp());
 
 class QuicksellApp extends StatelessWidget {
-  static const String _title = 'Quicksell App';
+  static const String title = 'Quicksell App';
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: _title,
-      home: MainWidget(),
+      title: title,
+      home: FutureBuilder<bool>(
+        future: api.connect(),
+        builder: (context, snapshot) {
+          return snapshot.hasData && snapshot.data
+              ? MainWidget()
+              : Center(child: CircularProgressIndicator());
+        },
+      ),
     );
   }
 }
@@ -35,8 +43,6 @@ class _CurrentPage extends State<MainWidget> {
     Chats(),
     Profile(),
   ];
-
-  void _onItemTapped(int index) => setState(() => _selectedIndex = index);
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +76,7 @@ class _CurrentPage extends State<MainWidget> {
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[600],
         unselectedItemColor: Colors.white,
-        onTap: _onItemTapped,
+        onTap: (int index) => setState(() => _selectedIndex = index),
         backgroundColor: Colors.blue,
         type: BottomNavigationBarType.fixed,
       ),
