@@ -34,6 +34,7 @@ dev_dependencies:
   http: ^0.12.2
   infinite_scroll_pagination: ^2.3.0
   intl: ^0.16.1
+  url_launcher: ^5.7.10
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

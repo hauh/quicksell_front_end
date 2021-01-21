@@ -5,3 +5,4 @@ var currency = NumberFormat.currency(
   symbol: '₽',
   decimalDigits: 0,
 );
+var datetime = DateFormat("dd.MM.yyyy HH:mm");
