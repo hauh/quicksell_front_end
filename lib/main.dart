@@ -5,12 +5,12 @@ import 'package:quicksell_app/create.dart' show CreateListing;
 import 'package:quicksell_app/feed.dart' show Feed;
 import 'package:quicksell_app/profile.dart' show Profile;
 import 'package:quicksell_app/search.dart' show Search;
+import 'package:quicksell_app/authorization.dart' show Authorization;
 
 void main() => runApp(QuicksellApp());
 
 class QuicksellApp extends StatelessWidget {
   static const String title = 'Quicksell App';
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -76,7 +76,14 @@ class _CurrentPage extends State<MainWidget> {
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[600],
         unselectedItemColor: Colors.white,
-        onTap: (int index) => setState(() => _selectedIndex = index),
+        onTap: (int index) {
+          index == 0
+              ? setState(() => _selectedIndex = index)
+              : Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Authorization()),
+                );
+        },
         backgroundColor: Colors.blue,
         type: BottomNavigationBarType.fixed,
       ),

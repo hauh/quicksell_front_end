@@ -13,6 +13,16 @@ Future<bool> connect() async {
   return (response.statusCode == 200);
 }
 
+Future<String> authorize(String email, String password) async {
+  final response = await http.post(
+    apiEndpoints['auth'],
+    body: jsonEncode({'username': email, 'password': password}),
+  );
+  return response.statusCode == 201
+      ? json.decode(response.body)['token']
+      : null;
+}
+
 Future<List<Listing>> getListings(int page) async {
   final response = await http.get(
     apiEndpoints['listings'] + page.toString(),
