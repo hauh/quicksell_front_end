@@ -7,26 +7,32 @@ import 'package:quicksell_app/models.dart';
 
 Map<String, dynamic> apiEndpoints;
 
+var headers = {
+  'Content-Type': 'application/json; charset=utf-8',
+};
+
 Future<bool> connect() async {
   apiEndpoints = json.decode(await rootBundle.loadString('assets/urls.json'));
   final response = await http.get(apiEndpoints['info']);
   return (response.statusCode == 200);
 }
 
-Future<String> authorize(String email, String password) async {
+Future<bool> authorize(String email, String password) async {
   final response = await http.post(
     apiEndpoints['auth'],
     body: jsonEncode({'username': email, 'password': password}),
+    headers: headers,
   );
-  return response.statusCode == 201
-      ? json.decode(response.body)['token']
-      : null;
+  if (response.statusCode != 201) return false;
+  var token = json.decode(utf8.decode(response.bodyBytes))['token'];
+  headers['Authorization'] = "Token $token";
+  return true;
 }
 
 Future<List<Listing>> getListings(int page) async {
   final response = await http.get(
     apiEndpoints['listings'] + page.toString(),
-    headers: {'Content-Type': 'application/json; charset=utf-8'},
+    headers: headers,
   );
 
   if (response.statusCode == 200) {

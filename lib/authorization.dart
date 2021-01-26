@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'package:quicksell_app/utils.dart' as utils;
+import 'package:quicksell_app/api.dart' as api;
 
 class Authorization extends StatelessWidget {
   @override
@@ -47,7 +49,7 @@ class _SignUpView extends StatefulWidget {
 abstract class _AuthState<T> extends State {
   String title;
   GlobalKey<FormState> formKey;
-  TextEditingController controller;
+  Map<String, TextEditingController> controllers;
 
   @override
   void initState() {
@@ -58,11 +60,11 @@ abstract class _AuthState<T> extends State {
 
   @override
   void dispose() {
-    controller.dispose();
+    controllers.values.forEach((controller) => controller.dispose());
     super.dispose();
   }
 
-  void submitForm();
+  void submitForm(context);
 }
 
 class _SignInState extends _AuthState<_SignInView> {
@@ -70,6 +72,11 @@ class _SignInState extends _AuthState<_SignInView> {
 
   @override
   Widget build(BuildContext context) {
+    this.controllers = {
+      'email': TextEditingController(),
+      'password': TextEditingController(),
+    };
+
     return Form(
       key: this.formKey,
       child: _AuthorizationViewLayout(
@@ -80,6 +87,7 @@ class _SignInState extends _AuthState<_SignInView> {
               icon: Icon(Icons.email),
               labelText: "Email",
             ),
+            controller: this.controllers['email'],
             keyboardType: TextInputType.emailAddress,
             validator: _Validators.email,
             onEditingComplete: () => FocusScope.of(context).nextFocus(),
@@ -89,21 +97,43 @@ class _SignInState extends _AuthState<_SignInView> {
               icon: Icon(Icons.lock),
               labelText: "Password",
             ),
+            controller: this.controllers['password'],
             keyboardType: TextInputType.visiblePassword,
             obscureText: true,
             onEditingComplete: () => FocusScope.of(context).unfocus(),
           ),
           Divider(height: 40),
-          ElevatedButton(
-            onPressed: () => this.submitForm(),
-            child: Text('Submit'),
+          Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () => this.submitForm(context),
+              child: Text('Submit'),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void submitForm() => formKey.currentState.validate();
+  void submitForm(context) {
+    if (formKey.currentState.validate()) {
+      utils.loadingScreen(context, "Authorizing...");
+      var email = this.controllers['email'].text;
+      var password = this.controllers['password'].text;
+      api.authorize(email, password).then(
+        (success) {
+          var navigator = Navigator.of(context);
+          navigator.pop();
+          var notification;
+          if (success) {
+            notification = utils.Notification("Welcome back!");
+            navigator..pop()..pop();
+          } else
+            notification = utils.Notification("Check your email and password.");
+          Scaffold.of(context).showSnackBar(notification);
+        },
+      );
+    }
+  }
 }
 
 class _SignUpState extends _AuthState<_SignUpView> {
