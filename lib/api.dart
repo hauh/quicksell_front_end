@@ -23,9 +23,21 @@ Future<bool> authorize(String email, String password) async {
     body: jsonEncode({'username': email, 'password': password}),
     headers: headers,
   );
-  if (response.statusCode != 201) return false;
+  if (response.statusCode != 200) return false;
   var token = json.decode(utf8.decode(response.bodyBytes))['token'];
   headers['Authorization'] = "Token $token";
+  return true;
+}
+
+Future<bool> createAccount(String email, String password) async {
+  final response = await http.post(
+    apiEndpoints['signup'],
+    body: jsonEncode({'email': email, 'password': password}),
+    headers: headers,
+  );
+
+  if (response.statusCode != 201) return false;
+  if (!(await authorize(email, password))) return false;
   return true;
 }
 

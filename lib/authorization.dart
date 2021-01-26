@@ -54,13 +54,12 @@ abstract class _AuthState<T> extends State {
   @override
   void initState() {
     formKey = GlobalKey<FormState>();
-    controller = TextEditingController();
     super.initState();
   }
 
   @override
   void dispose() {
-    controllers.values.forEach((controller) => controller.dispose());
+    // controllers.values.forEach((controller) => controller.dispose());
     super.dispose();
   }
 
@@ -69,14 +68,13 @@ abstract class _AuthState<T> extends State {
 
 class _SignInState extends _AuthState<_SignInView> {
   final title = "Authorization";
+  final controllers = {
+    'email': TextEditingController(),
+    'password': TextEditingController(),
+  };
 
   @override
   Widget build(BuildContext context) {
-    this.controllers = {
-      'email': TextEditingController(),
-      'password': TextEditingController(),
-    };
-
     return Form(
       key: this.formKey,
       child: _AuthorizationViewLayout(
@@ -100,7 +98,7 @@ class _SignInState extends _AuthState<_SignInView> {
             controller: this.controllers['password'],
             keyboardType: TextInputType.visiblePassword,
             obscureText: true,
-            onEditingComplete: () => FocusScope.of(context).unfocus(),
+            onEditingComplete: () => FocusScope.of(context).nextFocus(),
           ),
           Divider(height: 40),
           Builder(
@@ -138,11 +136,14 @@ class _SignInState extends _AuthState<_SignInView> {
 
 class _SignUpState extends _AuthState<_SignUpView> {
   final title = "Registration";
+  final controllers = {
+    'name': TextEditingController(),
+    'email': TextEditingController(),
+    'password': TextEditingController(),
+  };
 
   @override
   Widget build(BuildContext context) {
-    String passToCompare;
-
     return Form(
       key: this.formKey,
       child: _AuthorizationViewLayout(
@@ -154,6 +155,7 @@ class _SignUpState extends _AuthState<_SignUpView> {
                 labelText: "Name",
                 hintText: "How people should call you?",
               ),
+              controller: this.controllers['name'],
               keyboardType: TextInputType.name,
               validator: (value) => value.isEmpty ? "Enter something" : null,
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -164,6 +166,7 @@ class _SignUpState extends _AuthState<_SignUpView> {
                 labelText: "Email",
                 hintText: "name@example.com",
               ),
+              controller: this.controllers['email'],
               keyboardType: TextInputType.emailAddress,
               validator: _Validators.email,
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -174,11 +177,11 @@ class _SignUpState extends _AuthState<_SignUpView> {
                 labelText: "Password",
                 hintText: "Enter something secure",
               ),
+              controller: this.controllers['password'],
               keyboardType: TextInputType.visiblePassword,
               obscureText: true,
               validator: _Validators.password,
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              onSaved: (password) => passToCompare = password,
               onEditingComplete: () => FocusScope.of(context).nextFocus()),
           TextFormField(
             decoration: InputDecoration(
@@ -189,21 +192,44 @@ class _SignUpState extends _AuthState<_SignUpView> {
             keyboardType: TextInputType.visiblePassword,
             obscureText: true,
             validator: (password) =>
-                password != passToCompare ? "Password doesn't match" : null,
+                password != this.controllers['password'].text
+                    ? "Passwords don't match"
+                    : null,
             autovalidateMode: AutovalidateMode.onUserInteraction,
-            onEditingComplete: () => FocusScope.of(context).unfocus(),
+            onEditingComplete: () => FocusScope.of(context).nextFocus(),
           ),
           Divider(height: 40),
-          ElevatedButton(
-            onPressed: () => this.submitForm(),
-            child: Text('Submit'),
+          Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () => this.submitForm(context),
+              child: Text('Submit'),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void submitForm() => formKey.currentState.validate();
+  void submitForm(context) {
+    if (formKey.currentState.validate()) {
+      utils.loadingScreen(context, "Creating account...");
+      var email = this.controllers['email'].text;
+      var password = this.controllers['password'].text;
+      api.createAccount(email, password).then(
+        (success) {
+          var navigator = Navigator.of(context);
+          navigator.pop();
+          var notification;
+          if (success) {
+            notification = utils.Notification("Welcome to Quicksell App!");
+            navigator..pop()..pop();
+          } else
+            notification = utils.Notification("Check your email and password.");
+          Scaffold.of(context).showSnackBar(notification);
+        },
+      );
+    }
+  }
 }
 
 class _Validators {
