@@ -6,6 +6,7 @@ import 'package:quicksell_app/feed.dart' show Feed;
 import 'package:quicksell_app/profile.dart' show Profile;
 import 'package:quicksell_app/search.dart' show Search;
 import 'package:quicksell_app/authorization.dart' show Authorization;
+import 'package:quicksell_app/state.dart' show AppState;
 
 void main() => runApp(QuicksellApp());
 
@@ -14,7 +15,12 @@ class QuicksellApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: AppState.navigatorKey,
       title: title,
+      builder: (context, widget) => Scaffold(
+        key: AppState.scaffoldKey,
+        body: widget,
+      ),
       home: FutureBuilder<bool>(
         future: api.connect(),
         builder: (context, snapshot) {
@@ -28,8 +34,6 @@ class QuicksellApp extends StatelessWidget {
 }
 
 class MainWidget extends StatefulWidget {
-  MainWidget({Key key}) : super(key: key);
-
   @override
   _CurrentPage createState() => _CurrentPage();
 }

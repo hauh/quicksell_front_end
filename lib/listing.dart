@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:quicksell_app/models.dart';
-import 'package:quicksell_app/utils.dart' as utils;
+import 'package:quicksell_app/state.dart' show AppState;
 import 'package:url_launcher/url_launcher.dart' show launch;
 
 class ListingCard extends StatelessWidget {
@@ -14,7 +14,7 @@ class ListingCard extends StatelessWidget {
         leading: Icon(Icons.no_photography),
         title: Text(listing.title),
         subtitle: Text(listing.category),
-        trailing: Text(utils.currency.format(listing.price)),
+        trailing: Text(AppState.currencyFormat(listing.price)),
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => ListingView(listing)),
@@ -119,7 +119,7 @@ class _Price extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      utils.currency.format(this.price),
+      AppState.currencyFormat(this.price),
       style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       textAlign: TextAlign.center,
     );
@@ -213,8 +213,8 @@ class _Details extends StatelessWidget {
         Text("Category: ${listing.category}"),
         Text("Condition: ${listing.conditionNew ? "new" : "used"}"),
         Text("Details: ${listing.characteristics}"),
-        Text("Date created: ${utils.datetime.format(listing.dateCreated)}"),
-        Text("Date expires: ${utils.datetime.format(listing.dateExpires)}"),
+        Text("Date created: ${AppState.datetimeFormat(listing.dateCreated)}"),
+        Text("Date expires: ${AppState.datetimeFormat(listing.dateExpires)}"),
       ],
     );
   }
