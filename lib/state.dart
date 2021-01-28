@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:quicksell_app/models.dart' show User;
 
 class AppState {
-  static final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey();
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey();
+  static final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey();
 
+  static final Function datetimeFormat = DateFormat("dd.MM.yyyy HH:mm").format;
   static final Function currencyFormat = NumberFormat.currency(
     locale: 'ru_RU',
     symbol: '₽',
     decimalDigits: 0,
   ).format;
-  static final Function datetimeFormat = DateFormat("dd.MM.yyyy HH:mm").format;
 
   static void notify(String message) {
     scaffoldKey.currentState.showSnackBar(
@@ -49,13 +50,19 @@ class AppState {
 
 class UserState with ChangeNotifier {
   bool _authenticated = false;
+  User user;
 
   bool get authenticated => _authenticated;
-  set authenticated(bool newStatus) {
-    _authenticated = newStatus;
+
+  void logIn(User user) {
+    _authenticated = true;
+    this.user = user;
     notifyListeners();
   }
 
-  void logIn() => authenticated = true;
-  void logOut() => authenticated = false;
+  void logOut() {
+    _authenticated = false;
+    this.user = null;
+    notifyListeners();
+  }
 }

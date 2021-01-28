@@ -127,7 +127,7 @@ class _Price extends StatelessWidget {
 }
 
 class _Contact extends StatelessWidget {
-  final Seller seller;
+  final Profile seller;
   _Contact(this.seller);
 
   @override
@@ -238,7 +238,7 @@ class _Stats extends StatelessWidget {
 }
 
 class _Seller extends StatelessWidget {
-  final Seller seller;
+  final Profile seller;
   _Seller(this.seller);
 
   @override

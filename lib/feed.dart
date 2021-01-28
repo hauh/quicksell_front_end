@@ -2,9 +2,9 @@ import 'dart:async' show Future;
 
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:quicksell_app/api.dart' as api;
-import 'package:quicksell_app/listing.dart';
-import 'package:quicksell_app/models.dart';
+import 'package:quicksell_app/api.dart' show API;
+import 'package:quicksell_app/listing.dart' show ListingCard;
+import 'package:quicksell_app/models.dart' show Listing;
 
 class Feed extends StatefulWidget {
   @override
@@ -23,12 +23,10 @@ class _FeedState extends State<Feed> {
 
   Future<void> fetchPage(int pageKey) async {
     try {
-      final newItems = await api.getListings(pageKey);
-      if (newItems.length < 10) {
-        pagingController.appendLastPage(newItems);
-      } else {
-        pagingController.appendPage(newItems, pageKey + 1);
-      }
+      final newItems = await API().getListings(pageKey);
+      newItems.length >= 10
+          ? pagingController.appendPage(newItems, pageKey + 1)
+          : pagingController.appendLastPage(newItems);
     } catch (error) {
       pagingController.error = error;
     }

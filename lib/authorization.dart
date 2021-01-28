@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
-import 'package:quicksell_app/api.dart' as api;
+import 'package:quicksell_app/api.dart' show API;
 import 'package:quicksell_app/state.dart' show AppState, UserState;
 
-class AuthenticationRequired extends Consumer<UserState> {
-  AuthenticationRequired({@required Widget child})
-      : super(
-          builder: (BuildContext context, UserState userState, Widget child) =>
-              userState.authenticated ? child : _Authorization(),
-          child: child,
-        );
+class AuthenticationRequired extends StatelessWidget {
+  final Widget child;
+  AuthenticationRequired({@required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<UserState>(
+      builder: (BuildContext context, UserState userState, Widget child) =>
+          userState.authenticated ? child : _Authorization(),
+      child: child,
+    );
+  }
 }
 
 class _Authorization extends StatelessWidget {
@@ -120,26 +125,24 @@ class _SignInState extends _AuthState<_SignInView> {
     );
   }
 
-  void submitForm(context) {
+  void submitForm(BuildContext contextcontext) {
     FocusScope.of(context).unfocus();
     if (formKey.currentState.validate()) {
       AppState.waiting("Authorizing...");
-      api
-          .authorize(
+      context
+          .read<API>()
+          .authenticate(
             this.controllers['email'].text,
             this.controllers['password'].text,
           )
           .whenComplete(() => AppState.stopWaiting())
           .then(
-        (isSuccess) {
-          if (isSuccess) {
-            Provider.of<UserState>(context, listen: false).logIn();
-            AppState.notify("Welcome back!");
-            Navigator.of(context).pop();
-          } else
-            AppState.notify("Check your email and password");
+        (userModel) {
+          context.read<UserState>().logIn(userModel);
+          AppState.notify("Welcome back, ${userModel.profile.fullName}!");
+          Navigator.of(context).pop();
         },
-      );
+      ).catchError((err) => AppState.notify(err.toString()));
     }
   }
 }
@@ -218,27 +221,24 @@ class _SignUpState extends _AuthState<_SignUpView> {
     );
   }
 
-  void submitForm(context) {
+  void submitForm(BuildContext context) {
     FocusScope.of(context).unfocus();
     if (formKey.currentState.validate()) {
       AppState.waiting("Creating account...");
-      api
+      context
+          .read<API>()
           .createAccount(
             this.controllers['email'].text,
             this.controllers['password'].text,
           )
           .whenComplete(() => AppState.stopWaiting())
           .then(
-        (isSuccess) {
-          if (isSuccess) {
-            Provider.of<UserState>(context, listen: false).logIn();
-            var name = this.controllers['name'].text;
-            AppState.notify("Welcome to Quicksell App, $name!");
-            Navigator.of(context).pop();
-          } else
-            AppState.notify("Registration failed");
+        (userModel) {
+          context.read<UserState>().logIn(userModel);
+          AppState.notify("Welcome, ${userModel.profile.fullName}!");
+          Navigator.of(context).pop();
         },
-      );
+      ).catchError((err) => AppState.notify(err.toString()));
     }
   }
 }

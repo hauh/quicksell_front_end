@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:quicksell_app/api.dart' as api;
+import 'package:quicksell_app/api.dart' show API;
 import 'package:quicksell_app/chats.dart' show Chats;
 import 'package:quicksell_app/create.dart' show CreateListing;
 import 'package:quicksell_app/feed.dart' show Feed;
@@ -9,8 +9,16 @@ import 'package:quicksell_app/search.dart' show Search;
 import 'package:quicksell_app/state.dart' show AppState, UserState;
 
 void main() => runApp(
-      ChangeNotifierProvider(
-        create: (_) => UserState(),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<UserState>(
+            create: (_) => UserState(),
+          ),
+          Provider<API>(
+            create: (_) => API(),
+            dispose: (_, api) => api.dispose(),
+          ),
+        ],
         child: QuicksellApp(),
       ),
     );
@@ -27,7 +35,7 @@ class QuicksellApp extends StatelessWidget {
         body: widget,
       ),
       home: FutureBuilder<bool>(
-        future: api.connect(),
+        future: context.read<API>().init(),
         builder: (context, snapshot) => snapshot.hasData && snapshot.data
             ? MainWidget()
             : Center(child: CircularProgressIndicator()),
@@ -42,7 +50,6 @@ class MainWidget extends StatefulWidget {
 }
 
 class _CurrentPage extends State<MainWidget> {
-  int _selectedIndex = 0;
   static List<Widget> pages = <Widget>[
     Feed(),
     Search(),
@@ -50,6 +57,7 @@ class _CurrentPage extends State<MainWidget> {
     Chats(),
     Profile(),
   ];
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
