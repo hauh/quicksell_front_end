@@ -12,8 +12,6 @@ class AppState {
   ).format;
   static final Function datetimeFormat = DateFormat("dd.MM.yyyy HH:mm").format;
 
-  static bool authorized = false;
-
   static void notify(String message) {
     scaffoldKey.currentState.showSnackBar(
       SnackBar(
@@ -29,7 +27,7 @@ class AppState {
     );
   }
 
-  static void wait(String message) {
+  static void waiting(String message) {
     showDialog(
       barrierDismissible: false,
       context: navigatorKey.currentContext,
@@ -46,5 +44,18 @@ class AppState {
     );
   }
 
-  static void stopWait() => Navigator.of(navigatorKey.currentContext).pop();
+  static void stopWaiting() => Navigator.of(navigatorKey.currentContext).pop();
+}
+
+class UserState with ChangeNotifier {
+  bool _authenticated = false;
+
+  bool get authenticated => _authenticated;
+  set authenticated(bool newStatus) {
+    _authenticated = newStatus;
+    notifyListeners();
+  }
+
+  void logIn() => authenticated = true;
+  void logOut() => authenticated = false;
 }

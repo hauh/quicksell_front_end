@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:quicksell_app/api.dart' as api;
 import 'package:quicksell_app/chats.dart' show Chats;
 import 'package:quicksell_app/create.dart' show CreateListing;
 import 'package:quicksell_app/feed.dart' show Feed;
 import 'package:quicksell_app/profile.dart' show Profile;
 import 'package:quicksell_app/search.dart' show Search;
-import 'package:quicksell_app/authorization.dart' show Authorization;
-import 'package:quicksell_app/state.dart' show AppState;
+import 'package:quicksell_app/state.dart' show AppState, UserState;
 
-void main() => runApp(QuicksellApp());
+void main() => runApp(
+      ChangeNotifierProvider(
+        create: (_) => UserState(),
+        child: QuicksellApp(),
+      ),
+    );
 
 class QuicksellApp extends StatelessWidget {
   static const String title = 'Quicksell App';
@@ -23,11 +28,9 @@ class QuicksellApp extends StatelessWidget {
       ),
       home: FutureBuilder<bool>(
         future: api.connect(),
-        builder: (context, snapshot) {
-          return snapshot.hasData && snapshot.data
-              ? MainWidget()
-              : Center(child: CircularProgressIndicator());
-        },
+        builder: (context, snapshot) => snapshot.hasData && snapshot.data
+            ? MainWidget()
+            : Center(child: CircularProgressIndicator()),
       ),
     );
   }
@@ -80,14 +83,7 @@ class _CurrentPage extends State<MainWidget> {
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[600],
         unselectedItemColor: Colors.white,
-        onTap: (int index) {
-          index == 0
-              ? setState(() => _selectedIndex = index)
-              : Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Authorization()),
-                );
-        },
+        onTap: (int index) => setState(() => _selectedIndex = index),
         backgroundColor: Colors.blue,
         type: BottomNavigationBarType.fixed,
       ),

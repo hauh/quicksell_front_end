@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
-import 'package:quicksell_app/utils.dart' as utils;
+import 'package:provider/provider.dart';
 import 'package:quicksell_app/api.dart' as api;
+import 'package:quicksell_app/state.dart' show AppState, UserState;
 
-class Authorization extends StatelessWidget {
+class AuthenticationRequired extends Consumer<UserState> {
+  AuthenticationRequired({@required Widget child})
+      : super(
+          builder: (BuildContext context, UserState userState, Widget child) =>
+              userState.authenticated ? child : _Authorization(),
+          child: child,
+        );
+}
+
+class _Authorization extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _AuthorizationViewLayout(
@@ -59,11 +69,11 @@ abstract class _AuthState<T> extends State {
 
   @override
   void dispose() {
-    // controllers.values.forEach((controller) => controller.dispose());
+    controllers.values.forEach((controller) => controller.dispose());
     super.dispose();
   }
 
-  void submitForm(context);
+  void submitForm(BuildContext context);
 }
 
 class _SignInState extends _AuthState<_SignInView> {
@@ -101,11 +111,9 @@ class _SignInState extends _AuthState<_SignInView> {
             onEditingComplete: () => FocusScope.of(context).nextFocus(),
           ),
           Divider(height: 40),
-          Builder(
-            builder: (context) => ElevatedButton(
-              onPressed: () => this.submitForm(context),
-              child: Text('Submit'),
-            ),
+          ElevatedButton(
+            onPressed: () => this.submitForm(context),
+            child: Text('Submit'),
           ),
         ],
       ),
@@ -113,21 +121,23 @@ class _SignInState extends _AuthState<_SignInView> {
   }
 
   void submitForm(context) {
+    FocusScope.of(context).unfocus();
     if (formKey.currentState.validate()) {
-      utils.loadingScreen(context, "Authorizing...");
-      var email = this.controllers['email'].text;
-      var password = this.controllers['password'].text;
-      api.authorize(email, password).then(
-        (success) {
-          var navigator = Navigator.of(context);
-          navigator.pop();
-          var notification;
-          if (success) {
-            notification = utils.Notification("Welcome back!");
-            navigator..pop()..pop();
+      AppState.waiting("Authorizing...");
+      api
+          .authorize(
+            this.controllers['email'].text,
+            this.controllers['password'].text,
+          )
+          .whenComplete(() => AppState.stopWaiting())
+          .then(
+        (isSuccess) {
+          if (isSuccess) {
+            Provider.of<UserState>(context, listen: false).logIn();
+            AppState.notify("Welcome back!");
+            Navigator.of(context).pop();
           } else
-            notification = utils.Notification("Check your email and password.");
-          Scaffold.of(context).showSnackBar(notification);
+            AppState.notify("Check your email and password");
         },
       );
     }
@@ -199,11 +209,9 @@ class _SignUpState extends _AuthState<_SignUpView> {
             onEditingComplete: () => FocusScope.of(context).nextFocus(),
           ),
           Divider(height: 40),
-          Builder(
-            builder: (context) => ElevatedButton(
-              onPressed: () => this.submitForm(context),
-              child: Text('Submit'),
-            ),
+          ElevatedButton(
+            onPressed: () => this.submitForm(context),
+            child: Text('Submit'),
           ),
         ],
       ),
@@ -211,21 +219,24 @@ class _SignUpState extends _AuthState<_SignUpView> {
   }
 
   void submitForm(context) {
+    FocusScope.of(context).unfocus();
     if (formKey.currentState.validate()) {
-      utils.loadingScreen(context, "Creating account...");
-      var email = this.controllers['email'].text;
-      var password = this.controllers['password'].text;
-      api.createAccount(email, password).then(
-        (success) {
-          var navigator = Navigator.of(context);
-          navigator.pop();
-          var notification;
-          if (success) {
-            notification = utils.Notification("Welcome to Quicksell App!");
-            navigator..pop()..pop();
+      AppState.waiting("Creating account...");
+      api
+          .createAccount(
+            this.controllers['email'].text,
+            this.controllers['password'].text,
+          )
+          .whenComplete(() => AppState.stopWaiting())
+          .then(
+        (isSuccess) {
+          if (isSuccess) {
+            Provider.of<UserState>(context, listen: false).logIn();
+            var name = this.controllers['name'].text;
+            AppState.notify("Welcome to Quicksell App, $name!");
+            Navigator.of(context).pop();
           } else
-            notification = utils.Notification("Check your email and password.");
-          Scaffold.of(context).showSnackBar(notification);
+            AppState.notify("Registration failed");
         },
       );
     }
