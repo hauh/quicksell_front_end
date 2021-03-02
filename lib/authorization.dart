@@ -78,7 +78,7 @@ abstract class _AuthState<T> extends State {
     super.dispose();
   }
 
-  void submitForm(BuildContext context);
+  void submitForm();
 }
 
 class _SignInState extends _AuthState<_SignInView> {
@@ -91,16 +91,16 @@ class _SignInState extends _AuthState<_SignInView> {
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: this.formKey,
+      key: formKey,
       child: _AuthorizationViewLayout(
-        title: this.title,
+        title: title,
         children: [
           TextFormField(
             decoration: InputDecoration(
               icon: Icon(Icons.email),
               labelText: "Email",
             ),
-            controller: this.controllers['email'],
+            controller: controllers['email'],
             keyboardType: TextInputType.emailAddress,
             validator: _Validators.email,
             onEditingComplete: () => FocusScope.of(context).nextFocus(),
@@ -110,14 +110,14 @@ class _SignInState extends _AuthState<_SignInView> {
               icon: Icon(Icons.lock),
               labelText: "Password",
             ),
-            controller: this.controllers['password'],
+            controller: controllers['password'],
             keyboardType: TextInputType.visiblePassword,
             obscureText: true,
             onEditingComplete: () => FocusScope.of(context).nextFocus(),
           ),
           Divider(height: 40),
           ElevatedButton(
-            onPressed: () => this.submitForm(context),
+            onPressed: () => submitForm(),
             child: Text('Submit'),
           ),
         ],
@@ -125,15 +125,15 @@ class _SignInState extends _AuthState<_SignInView> {
     );
   }
 
-  void submitForm(BuildContext contextcontext) {
+  void submitForm() {
     FocusScope.of(context).unfocus();
     if (formKey.currentState.validate()) {
       AppState.waiting("Authorizing...");
       context
           .read<API>()
           .authenticate(
-            this.controllers['email'].text,
-            this.controllers['password'].text,
+            controllers['email'].text,
+            controllers['password'].text,
           )
           .whenComplete(() => AppState.stopWaiting())
           .then(
@@ -158,9 +158,9 @@ class _SignUpState extends _AuthState<_SignUpView> {
   @override
   Widget build(BuildContext context) {
     return Form(
-      key: this.formKey,
+      key: formKey,
       child: _AuthorizationViewLayout(
-        title: this.title,
+        title: title,
         children: [
           TextFormField(
               decoration: InputDecoration(
@@ -168,7 +168,7 @@ class _SignUpState extends _AuthState<_SignUpView> {
                 labelText: "Name",
                 hintText: "How people should call you?",
               ),
-              controller: this.controllers['name'],
+              controller: controllers['name'],
               keyboardType: TextInputType.name,
               validator: (value) => value.isEmpty ? "Enter something" : null,
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -179,7 +179,7 @@ class _SignUpState extends _AuthState<_SignUpView> {
                 labelText: "Email",
                 hintText: "name@example.com",
               ),
-              controller: this.controllers['email'],
+              controller: controllers['email'],
               keyboardType: TextInputType.emailAddress,
               validator: _Validators.email,
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -190,7 +190,7 @@ class _SignUpState extends _AuthState<_SignUpView> {
                 labelText: "Password",
                 hintText: "Enter something secure",
               ),
-              controller: this.controllers['password'],
+              controller: controllers['password'],
               keyboardType: TextInputType.visiblePassword,
               obscureText: true,
               validator: _Validators.password,
@@ -204,16 +204,15 @@ class _SignUpState extends _AuthState<_SignUpView> {
             ),
             keyboardType: TextInputType.visiblePassword,
             obscureText: true,
-            validator: (password) =>
-                password != this.controllers['password'].text
-                    ? "Passwords don't match"
-                    : null,
+            validator: (password) => password != controllers['password'].text
+                ? "Passwords don't match"
+                : null,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             onEditingComplete: () => FocusScope.of(context).nextFocus(),
           ),
           Divider(height: 40),
           ElevatedButton(
-            onPressed: () => this.submitForm(context),
+            onPressed: () => submitForm(),
             child: Text('Submit'),
           ),
         ],
@@ -221,15 +220,15 @@ class _SignUpState extends _AuthState<_SignUpView> {
     );
   }
 
-  void submitForm(BuildContext context) {
+  void submitForm() {
     FocusScope.of(context).unfocus();
     if (formKey.currentState.validate()) {
       AppState.waiting("Creating account...");
       context
           .read<API>()
           .createAccount(
-            this.controllers['email'].text,
-            this.controllers['password'].text,
+            controllers['email'].text,
+            controllers['password'].text,
           )
           .whenComplete(() => AppState.stopWaiting())
           .then(
@@ -284,7 +283,7 @@ class _AuthorizationViewLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(this.title),
+        title: Text(title),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -295,7 +294,7 @@ class _AuthorizationViewLayout extends StatelessWidget {
             children: [
               Icon(Icons.login, size: 100.0),
               SizedBox(height: 40.0),
-              ...this.children,
+              ...children,
             ],
           ),
         ),
