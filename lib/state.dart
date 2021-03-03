@@ -17,7 +17,7 @@ class AppState {
     scaffoldKey.currentState.showSnackBar(
       SnackBar(
         content: Text(message),
-        margin: EdgeInsets.fromLTRB(10, 10, 10, 50),
+        margin: EdgeInsets.fromLTRB(10, 10, 10, 60),
         behavior: SnackBarBehavior.floating,
         duration: Duration(seconds: 3),
         action: SnackBarAction(
@@ -62,7 +62,7 @@ class UserState with ChangeNotifier {
 
   void logOut() {
     _authenticated = false;
-    this.user = null;
+    user = null;
     notifyListeners();
   }
 }

@@ -3,8 +3,7 @@ import 'dart:async' show Future;
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:quicksell_app/api.dart' show API;
-import 'package:quicksell_app/listing.dart' show ListingCard;
-import 'package:quicksell_app/models.dart' show Listing;
+import 'package:quicksell_app/listing/lib.dart' show Listing, ListingCard;
 
 class Feed extends StatefulWidget {
   @override

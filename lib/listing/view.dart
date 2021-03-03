@@ -1,11 +1,22 @@
-import 'package:flutter/material.dart';
-import 'package:quicksell_app/models.dart';
-import 'package:quicksell_app/state.dart' show AppState;
-import 'package:url_launcher/url_launcher.dart' show launch;
+part of listing;
 
-class ListingCard extends StatelessWidget {
+class ListingCard extends StatefulWidget {
   final Listing listing;
   ListingCard(this.listing);
+
+  @override
+  State<StatefulWidget> createState() => _CardState();
+}
+
+class _CardState extends State<ListingCard> {
+  Listing listing;
+
+  @override
+  void initState() {
+    listing = widget.listing;
+    listing.addListener(() => setState(() {}));
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,18 +26,31 @@ class ListingCard extends StatelessWidget {
         title: Text(listing.title),
         subtitle: Text(listing.category),
         trailing: Text(AppState.currencyFormat(listing.price)),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ListingView(listing)),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => _ListingView(listing)),
         ),
       ),
     );
   }
 }
 
-class ListingView extends StatelessWidget {
+class _ListingView extends StatefulWidget {
   final Listing listing;
-  ListingView(this.listing);
+  _ListingView(this.listing);
+
+  @override
+  State<StatefulWidget> createState() => _ListingViewState();
+}
+
+class _ListingViewState extends State<_ListingView> {
+  Listing listing;
+
+  @override
+  void initState() {
+    listing = widget.listing;
+    listing.addListener(() => setState(() {}));
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,14 +64,16 @@ class ListingView extends StatelessWidget {
         ],
       ),
       body: Container(
-        width: MediaQuery.of(context).size.width,
         padding: EdgeInsets.all(5.0),
         child: ListView(
           children: [
             _Gallery(listing.photos),
             Divider(color: Colors.black),
             _Price(listing.price),
-            _Contact(listing.seller),
+            Divider(color: Colors.black),
+            listing.seller == context.read<UserState>()?.user?.profile
+                ? _Edit(listing)
+                : _Contact(listing.seller),
             Divider(color: Colors.black),
             _Location(listing.location),
             Divider(color: Colors.black),
@@ -65,24 +91,27 @@ class ListingView extends StatelessWidget {
   }
 }
 
-abstract class _TopRightButton extends StatelessWidget {
-  Icon get icon;
-  Text get title;
-  Text get message;
+class _TopRightButton extends StatelessWidget {
+  final Icon icon;
+  final Text title;
+  final Text message;
+  final Widget action;
+  _TopRightButton({this.icon, this.title, this.message, this.action});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      child: this.icon,
-      onTap: () => showDialog(
+    return IconButton(
+      icon: icon,
+      onPressed: () => showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: this.title,
-          content: this.message,
-          actions: <Widget>[
-            FlatButton(
+          title: title,
+          content: message,
+          actions: [
+            action,
+            TextButton(
+              child: Text('Close'),
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
             ),
           ],
         ),
@@ -91,16 +120,34 @@ abstract class _TopRightButton extends StatelessWidget {
   }
 }
 
-class _ShareButton extends _TopRightButton {
-  final Icon icon = Icon(Icons.share);
-  final Text title = Text('Share');
-  final Text message = Text("Share this item?");
+class _ShareButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _TopRightButton(
+      icon: Icon(Icons.share),
+      title: Text("Share"),
+      message: Text("Share this item?"),
+      action: TextButton(
+        child: Text("Share"),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
 }
 
-class _AddToFavoritesButton extends _TopRightButton {
-  final Icon icon = Icon(Icons.favorite);
-  final Text title = Text('Favorites');
-  final Text message = Text("Save this item to favorites?");
+class _AddToFavoritesButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _TopRightButton(
+      icon: Icon(Icons.favorite),
+      title: Text("Favorites"),
+      message: Text("Save this item to favorites?"),
+      action: TextButton(
+        child: Text("Save"),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+    );
+  }
 }
 
 class _Gallery extends StatelessWidget {
@@ -108,7 +155,7 @@ class _Gallery extends StatelessWidget {
   _Gallery(this.photos);
 
   @override
-  Widget build(BuildContext context) =>
+  Widget build(BuildContext _) =>
       Image(image: AssetImage('assets/no_image.png'));
 }
 
@@ -119,8 +166,8 @@ class _Price extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      AppState.currencyFormat(this.price),
-      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      AppState.currencyFormat(price),
+      style: Theme.of(context).textTheme.headline5,
       textAlign: TextAlign.center,
     );
   }
@@ -137,8 +184,14 @@ class _Contact extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _CallButton("1234567890"),
-            _ChatButton(),
+            ElevatedButton(
+              child: Text('Call'),
+              onPressed: () => launch("tel: 123456789"),
+            ),
+            ElevatedButton(
+              child: Text('Chat'),
+              onPressed: () => Navigator.pushNamed(context, '/chats'),
+            ),
           ],
         ),
         Text('Online status: ${seller.online}'),
@@ -147,35 +200,22 @@ class _Contact extends StatelessWidget {
   }
 }
 
-abstract class _ContactButton extends StatelessWidget {
-  Text get text;
+class _Edit extends StatelessWidget {
+  final Listing listing;
+  _Edit(this.listing);
 
   @override
-  FlatButton build(BuildContext context) {
-    return FlatButton(
-      onPressed: this.callback,
-      child: this.text,
-      color: Theme.of(context).backgroundColor,
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.center,
+      child: ElevatedButton(
+        child: Text('Edit'),
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => EditListing.update(listing)),
+        ),
+      ),
     );
   }
-
-  void callback();
-}
-
-class _CallButton extends _ContactButton {
-  final Text text = Text('Call');
-  final String phoneNumber;
-  _CallButton(this.phoneNumber);
-
-  @override
-  void callback() => launch("tel:$phoneNumber");
-}
-
-class _ChatButton extends _ContactButton {
-  final Text text = Text('Chat');
-
-  @override
-  void callback() => null;
 }
 
 class _Description extends StatelessWidget {
@@ -184,7 +224,7 @@ class _Description extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Text(this.description.isEmpty ? "Lorem ipsum." : this.description);
+      Text(description.isEmpty ? "Lorem ipsum." : description);
 }
 
 class _Location extends StatelessWidget {

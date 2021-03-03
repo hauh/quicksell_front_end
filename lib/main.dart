@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:quicksell_app/api.dart' show API;
 import 'package:quicksell_app/chats.dart' show Chats;
-import 'package:quicksell_app/create.dart' show CreateListing;
+import 'package:quicksell_app/listing/lib.dart' show EditListing;
 import 'package:quicksell_app/feed.dart' show Feed;
 import 'package:quicksell_app/profile.dart' show Profile;
 import 'package:quicksell_app/search.dart' show Search;
@@ -40,6 +40,11 @@ class QuicksellApp extends StatelessWidget {
             ? MainWidget()
             : Center(child: CircularProgressIndicator()),
       ),
+      routes: {
+        '/feed': (_) => Feed(),
+        '/chats': (_) => Chats(),
+      },
+      initialRoute: '/feed',
     );
   }
 }
@@ -53,7 +58,7 @@ class _CurrentPage extends State<MainWidget> {
   static List<Widget> pages = <Widget>[
     Feed(),
     Search(),
-    CreateListing(),
+    EditListing.create(),
     Chats(),
     Profile(),
   ];
@@ -66,7 +71,8 @@ class _CurrentPage extends State<MainWidget> {
         child: pages.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        type: BottomNavigationBarType.fixed,
+        items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Feed',
@@ -89,6 +95,8 @@ class _CurrentPage extends State<MainWidget> {
           ),
         ],
         currentIndex: _selectedIndex,
+        onTap: (int index) => setState(() => _selectedIndex = index),
+        backgroundColor: Theme.of(context).accentColor,
         selectedItemColor: Colors.amber[600],
         unselectedItemColor: Colors.white,
         onTap: (int index) => setState(() => _selectedIndex = index),

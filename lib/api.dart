@@ -2,6 +2,7 @@ import 'dart:convert' show json, jsonEncode, utf8;
 
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
+import 'package:quicksell_app/listing/lib.dart' show Listing, ListingFormData;
 import 'package:quicksell_app/models.dart';
 
 class API extends http.BaseClient {
@@ -69,7 +70,9 @@ class API extends http.BaseClient {
   }
 
   Future<List<Listing>> getListings(int page) async {
-    final response = await get(_endpoints['listings'] + page.toString());
+    final response = await get(
+      _endpoints['listings'] + "?page=${page.toString()}",
+    );
     if (response.statusCode != 200) {
       if (response.statusCode != 404)
         throw Exception("Failed to get listings.");
@@ -79,26 +82,24 @@ class API extends http.BaseClient {
     return listings.map((data) => Listing.fromJson(data)).toList();
   }
 
-  Future<Listing> createListing(
-    String title,
-    String description,
-    String category,
-    int price,
-    bool condition,
-  ) async {
+  Future<Listing> createListing(ListingFormData formData) async {
     final response = await post(
       _endpoints['listings'],
-      body: jsonEncode({
-        'title': title,
-        'description': description,
-        'category': category,
-        'price': price,
-        'condition_new': condition,
-      }),
+      body: formData.toJson(),
     );
     if (response.statusCode != 201)
       throw Exception("Failed to create listing: \n" + response.body);
     return Listing.fromJson(_decode(response));
+  }
+
+  Future<ListingFormData> updateListing(ListingFormData formData) async {
+    final response = await patch(
+      _endpoints['listings'] + "${formData.uuid}/",
+      body: formData.toJson(),
+    );
+    if (response.statusCode != 200)
+      throw Exception("Failed to update listing: \n" + response.body);
+    return ListingFormData.fromJson(_decode(response));
   }
 
   void dispose() => _client.close();
