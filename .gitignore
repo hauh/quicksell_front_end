@@ -42,3 +42,4 @@ app.*.map.json
 
 old
 urls.json
+api_url

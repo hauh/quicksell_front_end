@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:quicksell_app/api.dart' show API;
 import 'package:quicksell_app/chats.dart' show Chats;
-import 'package:quicksell_app/listing/lib.dart' show EditListing;
 import 'package:quicksell_app/feed.dart' show Feed;
-import 'package:quicksell_app/profile.dart' show Profile;
+import 'package:quicksell_app/listing/lib.dart' show EditListing;
+import 'package:quicksell_app/profile/profile_main.dart' show Profile;
 import 'package:quicksell_app/search.dart' show Search;
-import 'package:quicksell_app/state.dart' show AppState, UserState;
+import 'package:quicksell_app/state.dart' show UserState;
 
 void main() => runApp(
       MultiProvider(
@@ -28,15 +28,10 @@ class QuicksellApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: AppState.navigatorKey,
       title: title,
-      builder: (context, widget) => Scaffold(
-        key: AppState.scaffoldKey,
-        body: widget,
-      ),
       home: FutureBuilder<bool>(
         future: context.read<API>().init(),
-        builder: (context, snapshot) => snapshot.hasData && snapshot.data
+        builder: (context, snapshot) => snapshot.hasData && snapshot.data!
             ? MainWidget()
             : Center(child: CircularProgressIndicator()),
       ),
@@ -44,7 +39,6 @@ class QuicksellApp extends StatelessWidget {
         '/feed': (_) => Feed(),
         '/chats': (_) => Chats(),
       },
-      initialRoute: '/feed',
     );
   }
 }
@@ -99,9 +93,6 @@ class _CurrentPage extends State<MainWidget> {
         backgroundColor: Theme.of(context).accentColor,
         selectedItemColor: Colors.amber[600],
         unselectedItemColor: Colors.white,
-        onTap: (int index) => setState(() => _selectedIndex = index),
-        backgroundColor: Colors.blue,
-        type: BottomNavigationBarType.fixed,
       ),
     );
   }

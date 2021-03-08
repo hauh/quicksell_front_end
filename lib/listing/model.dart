@@ -13,15 +13,15 @@ class Listing with ChangeNotifier {
   int sold;
   int views;
   DateTime dateExpires;
-  int location;
+  int? location;
   bool conditionNew;
-  String characteristics;
+  String? characteristics;
   List<dynamic> photos;
 
   Listing.fromJson(Map<String, dynamic> json)
       : uuid = json['uuid'],
         title = json['title'],
-        description = json['description'],
+        description = json['description'] ?? "No description",
         price = json['price'],
         category = json['category'],
         status = json['status'],
@@ -37,23 +37,23 @@ class Listing with ChangeNotifier {
         photos = json['photos'];
 
   void updateWithForm(ListingFormData formData) {
-    title = formData.title;
-    description = formData.description;
-    price = formData.price;
-    category = formData.category;
-    conditionNew = formData.conditionNew;
+    title = formData.title!;
+    description = formData.description!;
+    price = formData.price!;
+    category = formData.category!;
+    conditionNew = formData.conditionNew!;
 
     notifyListeners();
   }
 }
 
 class ListingFormData {
-  String uuid;
-  String title;
-  String description;
-  String category;
-  int price;
-  bool conditionNew;
+  String? uuid;
+  String? title;
+  String? description;
+  String? category;
+  int? price;
+  bool? conditionNew;
 
   ListingFormData();
 

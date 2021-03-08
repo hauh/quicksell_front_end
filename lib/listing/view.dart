@@ -9,7 +9,7 @@ class ListingCard extends StatefulWidget {
 }
 
 class _CardState extends State<ListingCard> {
-  Listing listing;
+  late Listing listing;
 
   @override
   void initState() {
@@ -43,7 +43,7 @@ class _ListingView extends StatefulWidget {
 }
 
 class _ListingViewState extends State<_ListingView> {
-  Listing listing;
+  late Listing listing;
 
   @override
   void initState() {
@@ -71,7 +71,7 @@ class _ListingViewState extends State<_ListingView> {
             Divider(color: Colors.black),
             _Price(listing.price),
             Divider(color: Colors.black),
-            listing.seller == context.read<UserState>()?.user?.profile
+            listing.seller == context.read<UserState>().user?.profile
                 ? _Edit(listing)
                 : _Contact(listing.seller),
             Divider(color: Colors.black),
@@ -96,7 +96,12 @@ class _TopRightButton extends StatelessWidget {
   final Text title;
   final Text message;
   final Widget action;
-  _TopRightButton({this.icon, this.title, this.message, this.action});
+  _TopRightButton({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.action,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -110,8 +115,8 @@ class _TopRightButton extends StatelessWidget {
           actions: [
             action,
             TextButton(
-              child: Text('Close'),
               onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
             ),
           ],
         ),
@@ -128,8 +133,8 @@ class _ShareButton extends StatelessWidget {
       title: Text("Share"),
       message: Text("Share this item?"),
       action: TextButton(
-        child: Text("Share"),
         onPressed: () => Navigator.of(context).pop(),
+        child: Text("Share"),
       ),
     );
   }
@@ -143,8 +148,8 @@ class _AddToFavoritesButton extends StatelessWidget {
       title: Text("Favorites"),
       message: Text("Save this item to favorites?"),
       action: TextButton(
-        child: Text("Save"),
         onPressed: () => Navigator.of(context).pop(),
+        child: Text("Save"),
       ),
     );
   }
@@ -185,12 +190,12 @@ class _Contact extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             ElevatedButton(
-              child: Text('Call'),
               onPressed: () => launch("tel: 123456789"),
+              child: Text('Call'),
             ),
             ElevatedButton(
-              child: Text('Chat'),
               onPressed: () => Navigator.pushNamed(context, '/chats'),
+              child: Text('Chat'),
             ),
           ],
         ),
@@ -209,10 +214,10 @@ class _Edit extends StatelessWidget {
     return Container(
       alignment: Alignment.center,
       child: ElevatedButton(
-        child: Text('Edit'),
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => EditListing.update(listing)),
         ),
+        child: Text('Edit'),
       ),
     );
   }
@@ -228,7 +233,7 @@ class _Description extends StatelessWidget {
 }
 
 class _Location extends StatelessWidget {
-  final int location;
+  final int? location;
   _Location(this.location);
 
   @override

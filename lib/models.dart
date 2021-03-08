@@ -5,8 +5,8 @@ class Profile {
   final String about;
   final bool online;
   final int rating;
-  final String avatar;
-  final int location;
+  final String? avatar;
+  final int? location;
 
   Profile.fromJson(Map<String, dynamic> json)
       : uuid = json['uuid'],

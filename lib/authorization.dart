@@ -2,282 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
 import 'package:quicksell_app/api.dart' show API;
-import 'package:quicksell_app/state.dart' show AppState, UserState;
+import 'package:quicksell_app/extensions.dart';
+import 'package:quicksell_app/state.dart' show UserState;
 
 class AuthenticationRequired extends StatelessWidget {
   final Widget child;
-  AuthenticationRequired({@required this.child});
+  AuthenticationRequired({required this.child});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<UserState>(
-      builder: (BuildContext context, UserState userState, Widget child) =>
-          userState.authenticated ? child : _Authorization(),
+      builder: (context, userState, child) =>
+          userState.authenticated ? child! : _Authorization(),
       child: child,
     );
-  }
-}
-
-class _Authorization extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return _AuthorizationViewLayout(
-      title: "Authorization required",
-      children: [
-        ElevatedButton(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => _SignInView()),
-          ),
-          child: Text("Sign In"),
-        ),
-        SignInButton(
-          Buttons.Google,
-          onPressed: () => null,
-        ),
-        SignInButton(
-          Buttons.FacebookNew,
-          onPressed: () => null,
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => _SignUpView()),
-          ),
-          child: Text("Sign Up"),
-        ),
-      ],
-    );
-  }
-}
-
-class _SignInView extends StatefulWidget {
-  @override
-  _SignInState createState() => _SignInState();
-}
-
-class _SignUpView extends StatefulWidget {
-  @override
-  _SignUpState createState() => _SignUpState();
-}
-
-abstract class _AuthState<T> extends State {
-  String title;
-  GlobalKey<FormState> formKey;
-  Map<String, TextEditingController> controllers;
-
-  @override
-  void initState() {
-    formKey = GlobalKey<FormState>();
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    controllers.values.forEach((controller) => controller.dispose());
-    super.dispose();
-  }
-
-  void submitForm();
-}
-
-class _SignInState extends _AuthState<_SignInView> {
-  final title = "Authorization";
-  final controllers = {
-    'email': TextEditingController(),
-    'password': TextEditingController(),
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      key: formKey,
-      child: _AuthorizationViewLayout(
-        title: title,
-        children: [
-          TextFormField(
-            decoration: InputDecoration(
-              icon: Icon(Icons.email),
-              labelText: "Email",
-            ),
-            controller: controllers['email'],
-            keyboardType: TextInputType.emailAddress,
-            validator: _Validators.email,
-            onEditingComplete: () => FocusScope.of(context).nextFocus(),
-          ),
-          TextFormField(
-            decoration: InputDecoration(
-              icon: Icon(Icons.lock),
-              labelText: "Password",
-            ),
-            controller: controllers['password'],
-            keyboardType: TextInputType.visiblePassword,
-            obscureText: true,
-            onEditingComplete: () => FocusScope.of(context).nextFocus(),
-          ),
-          Divider(height: 40),
-          ElevatedButton(
-            onPressed: () => submitForm(),
-            child: Text('Submit'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void submitForm() {
-    FocusScope.of(context).unfocus();
-    if (formKey.currentState.validate()) {
-      AppState.waiting("Authorizing...");
-      context
-          .read<API>()
-          .authenticate(
-            controllers['email'].text,
-            controllers['password'].text,
-          )
-          .whenComplete(() => AppState.stopWaiting())
-          .then(
-        (userModel) {
-          context.read<UserState>().logIn(userModel);
-          AppState.notify("Welcome back, ${userModel.profile.fullName}!");
-          Navigator.of(context).pop();
-        },
-      ).catchError((err) => AppState.notify(err.toString()));
-    }
-  }
-}
-
-class _SignUpState extends _AuthState<_SignUpView> {
-  final title = "Registration";
-  final controllers = {
-    'name': TextEditingController(),
-    'email': TextEditingController(),
-    'password': TextEditingController(),
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      key: formKey,
-      child: _AuthorizationViewLayout(
-        title: title,
-        children: [
-          TextFormField(
-              decoration: InputDecoration(
-                icon: Icon(Icons.person),
-                labelText: "Name",
-                hintText: "How people should call you?",
-              ),
-              controller: controllers['name'],
-              keyboardType: TextInputType.name,
-              validator: (value) => value.isEmpty ? "Enter something" : null,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              onEditingComplete: () => FocusScope.of(context).nextFocus()),
-          TextFormField(
-              decoration: InputDecoration(
-                icon: Icon(Icons.email),
-                labelText: "Email",
-                hintText: "name@example.com",
-              ),
-              controller: controllers['email'],
-              keyboardType: TextInputType.emailAddress,
-              validator: _Validators.email,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              onEditingComplete: () => FocusScope.of(context).nextFocus()),
-          TextFormField(
-              decoration: InputDecoration(
-                icon: Icon(Icons.lock),
-                labelText: "Password",
-                hintText: "Enter something secure",
-              ),
-              controller: controllers['password'],
-              keyboardType: TextInputType.visiblePassword,
-              obscureText: true,
-              validator: _Validators.password,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              onEditingComplete: () => FocusScope.of(context).nextFocus()),
-          TextFormField(
-            decoration: InputDecoration(
-              icon: Icon(Icons.lock),
-              labelText: "Confirm password",
-              hintText: "Enter the same again",
-            ),
-            keyboardType: TextInputType.visiblePassword,
-            obscureText: true,
-            validator: (password) => password != controllers['password'].text
-                ? "Passwords don't match"
-                : null,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            onEditingComplete: () => FocusScope.of(context).nextFocus(),
-          ),
-          Divider(height: 40),
-          ElevatedButton(
-            onPressed: () => submitForm(),
-            child: Text('Submit'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void submitForm() {
-    FocusScope.of(context).unfocus();
-    if (formKey.currentState.validate()) {
-      AppState.waiting("Creating account...");
-      context
-          .read<API>()
-          .createAccount(
-            controllers['email'].text,
-            controllers['password'].text,
-          )
-          .whenComplete(() => AppState.stopWaiting())
-          .then(
-        (userModel) {
-          context.read<UserState>().logIn(userModel);
-          AppState.notify("Welcome, ${userModel.profile.fullName}!");
-          Navigator.of(context).pop();
-        },
-      ).catchError((err) => AppState.notify(err.toString()));
-    }
-  }
-}
-
-class _Validators {
-  static RegExp _emailRegExp = RegExp(
-      r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@"
-      r"(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?");
-
-  static String email(String input) {
-    if (input.isEmpty) return "Email required";
-    if (!_emailRegExp.hasMatch(input)) return "Invalid format";
-    return null;
-  }
-
-  static RegExp _pwdUppercaseRegExp = RegExp(r"(?=.*?[A-Z])");
-  static RegExp _pwdLowercaseRegExp = RegExp(r"(?=.*?[a-z])");
-  static RegExp _pwdDigitRegExp = RegExp(r"(?=.*?[0-9])");
-  static RegExp _pwdSpecialCharRegExp = RegExp(r"(?=.*?[#?!@$%^&*-])");
-
-  static String password(String input) {
-    if (input.isEmpty) return "Password required";
-    if (input.length < 8)
-      return "Password must be at least be 8 characters long";
-    if (!_pwdUppercaseRegExp.hasMatch(input))
-      return "Password must contain at least one uppercase letter";
-    if (!_pwdLowercaseRegExp.hasMatch(input))
-      return "Password must contain at least one lowercase letter";
-    if (!_pwdDigitRegExp.hasMatch(input))
-      return "Password must contain at least one digit";
-    if (!_pwdSpecialCharRegExp.hasMatch(input))
-      return "Password must contain at least one special character";
-    return null;
   }
 }
 
 class _AuthorizationViewLayout extends StatelessWidget {
   final title;
   final children;
-  _AuthorizationViewLayout({@required this.title, @required this.children});
+  _AuthorizationViewLayout({required this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -300,5 +45,294 @@ class _AuthorizationViewLayout extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _Authorization extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return _AuthorizationViewLayout(
+      title: "Authorization required",
+      children: [
+        ElevatedButton(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => _SignInView()),
+          ),
+          child: Text("Sign In"),
+        ),
+        SignInButton(
+          Buttons.Google,
+          onPressed: () => null,
+        ),
+        SignInButton(
+          Buttons.FacebookNew,
+          onPressed: () => null,
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => _SignUpView()),
+          ),
+          child: Text("Sign Up"),
+        ),
+      ],
+    );
+  }
+}
+
+class _SignInView extends StatefulWidget {
+  @override
+  _SignInState createState() => _SignInState();
+}
+
+class _SignInState extends State<_SignInView> {
+  final title = "Authorization";
+  final formKey = GlobalKey<FormState>();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: formKey,
+      child: _AuthorizationViewLayout(
+        title: title,
+        children: [
+          _EmailField(emailController),
+          _SignInPasswordField(passwordController),
+          Divider(height: 40),
+          ElevatedButton(
+            onPressed: () => submitForm(),
+            child: Text('Submit'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void submitForm() {
+    FocusScope.of(context).unfocus();
+    if (formKey.currentState!.validate()) {
+      context.waiting("Authorizing...");
+      context
+          .read<API>()
+          .authenticate(emailController.text, passwordController.text)
+          .whenComplete(() => context.stopWaiting())
+          .then(
+        (user) {
+          context.read<UserState>().logIn(user);
+          context.notify("Welcome back, ${user.profile.fullName}!");
+          Navigator.of(context).pop();
+        },
+      ).catchError((err) => context.notify(err.toString()));
+    }
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+}
+
+class _SignUpView extends StatefulWidget {
+  @override
+  _SignUpState createState() => _SignUpState();
+}
+
+class _SignUpState extends State<_SignUpView> {
+  final title = "Registration";
+  final formKey = GlobalKey<FormState>();
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: formKey,
+      child: _AuthorizationViewLayout(
+        title: title,
+        children: [
+          _NameField(nameController),
+          _EmailField(emailController),
+          _SignUpPasswordField(passwordController),
+          _ConfirmPasswordField(passwordController),
+          Divider(height: 40),
+          ElevatedButton(
+            onPressed: () => submitForm(),
+            child: Text('Submit'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void submitForm() {
+    FocusScope.of(context).unfocus();
+    if (formKey.currentState!.validate()) {
+      context.waiting("Creating account...");
+      context
+          .read<API>()
+          .createAccount(
+            emailController.text,
+            passwordController.text,
+          )
+          .whenComplete(() => context.stopWaiting())
+          .then(
+        (userModel) {
+          context.read<UserState>().logIn(userModel);
+          context.notify("Welcome, ${userModel.profile.fullName}!");
+          Navigator.of(context).pop();
+        },
+      ).catchError((err) => context.notify(err.toString()));
+    }
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+}
+
+class _EmailField extends StatelessWidget {
+  final TextEditingController controller;
+  _EmailField(this.controller);
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      decoration: InputDecoration(
+        icon: Icon(Icons.email),
+        labelText: "Email",
+        hintText: "name@example.com",
+      ),
+      controller: controller,
+      keyboardType: TextInputType.emailAddress,
+      validator: _Validators.email,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onEditingComplete: () => FocusScope.of(context).nextFocus(),
+    );
+  }
+}
+
+class _SignInPasswordField extends StatelessWidget {
+  final TextEditingController controller;
+
+  _SignInPasswordField(this.controller);
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      decoration: InputDecoration(
+        icon: Icon(Icons.lock),
+        labelText: "Password",
+      ),
+      controller: controller,
+      keyboardType: TextInputType.visiblePassword,
+      obscureText: true,
+      onEditingComplete: () => FocusScope.of(context).nextFocus(),
+    );
+  }
+}
+
+class _NameField extends StatelessWidget {
+  final TextEditingController controller;
+  _NameField(this.controller);
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      decoration: InputDecoration(
+        icon: Icon(Icons.person),
+        labelText: "Name",
+        hintText: "How people should call you?",
+      ),
+      controller: controller,
+      keyboardType: TextInputType.name,
+      validator: (value) =>
+          value == null || value.isEmpty ? "Enter something" : null,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onEditingComplete: () => FocusScope.of(context).nextFocus(),
+    );
+  }
+}
+
+class _SignUpPasswordField extends StatelessWidget {
+  final TextEditingController controller;
+  _SignUpPasswordField(this.controller);
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      decoration: InputDecoration(
+        icon: Icon(Icons.lock),
+        labelText: "Password",
+        hintText: "Enter something secure",
+      ),
+      controller: controller,
+      keyboardType: TextInputType.visiblePassword,
+      obscureText: true,
+      validator: _Validators.password,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onEditingComplete: () => FocusScope.of(context).nextFocus(),
+    );
+  }
+}
+
+class _ConfirmPasswordField extends StatelessWidget {
+  final TextEditingController controller;
+  _ConfirmPasswordField(this.controller);
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      decoration: InputDecoration(
+        icon: Icon(Icons.lock),
+        labelText: "Confirm password",
+        hintText: "Enter the same again",
+      ),
+      keyboardType: TextInputType.visiblePassword,
+      obscureText: true,
+      validator: (password) =>
+          password != controller.text ? "Passwords don't match" : null,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onEditingComplete: () => FocusScope.of(context).nextFocus(),
+    );
+  }
+}
+
+class _Validators {
+  static final RegExp _emailRegExp = RegExp(
+      r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@"
+      r"(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?");
+
+  static String? email(String? input) {
+    if (input == null || input.isEmpty) return "Email required";
+    if (!_emailRegExp.hasMatch(input)) return "Invalid format";
+    return null;
+  }
+
+  static final RegExp _pwdUppercaseRegExp = RegExp(r"(?=.*?[A-Z])");
+  static final RegExp _pwdLowercaseRegExp = RegExp(r"(?=.*?[a-z])");
+  static final RegExp _pwdDigitRegExp = RegExp(r"(?=.*?[0-9])");
+  static final RegExp _pwdSpecialCharRegExp = RegExp(r"(?=.*?[#?!@$%^&*-])");
+
+  static String? password(String? input) {
+    if (input == null || input.isEmpty) return "Password required";
+    if (input.length < 8)
+      return "Password must be at least be 8 characters long";
+    if (!_pwdUppercaseRegExp.hasMatch(input))
+      return "Password must contain at least one uppercase letter";
+    if (!_pwdLowercaseRegExp.hasMatch(input))
+      return "Password must contain at least one lowercase letter";
+    if (!_pwdDigitRegExp.hasMatch(input))
+      return "Password must contain at least one digit";
+    if (!_pwdSpecialCharRegExp.hasMatch(input))
+      return "Password must contain at least one special character";
+    return null;
   }
 }

@@ -15,8 +15,8 @@ class API extends http.BaseClient {
     'Content-Type': 'application/json; charset=utf-8',
   };
 
-  Map<String, dynamic> _endpoints;
-  Map<String, dynamic> _categories;
+  late Uri apiUri;
+  late Map<String, dynamic> _categories;
   Map<String, dynamic> get categories => _categories;
 
   @override
@@ -26,9 +26,8 @@ class API extends http.BaseClient {
   }
 
   Future<bool> init() async {
-    final loadedUrls = await rootBundle.loadString('assets/urls.json');
-    _endpoints = json.decode(loadedUrls);
-    final response = await get(_endpoints['info']);
+    apiUri = Uri.parse(await rootBundle.loadString('assets/api_url'));
+    final response = await get(apiUri.resolve('info/'));
     if (response.statusCode != 200) return false;
     _categories = _decode(response)['categories'];
     return true;
@@ -39,7 +38,7 @@ class API extends http.BaseClient {
 
   Future<void> authorize(String email, String password) async {
     final response = await post(
-      _endpoints['auth'],
+      apiUri.resolve('users/login/'),
       body: jsonEncode({'username': email, 'password': password}),
     );
     if (response.statusCode != 200) throw Exception("Authorization failed.");
@@ -48,14 +47,14 @@ class API extends http.BaseClient {
 
   Future<User> authenticate(String email, String password) async {
     await authorize(email, password);
-    final response = await get(_endpoints['users']);
+    final response = await get(apiUri.resolve('users/'));
     if (response.statusCode != 200) throw Exception("Authentication failed.");
     return User.fromJson(_decode(response));
   }
 
   Future<User> createAccount(String email, String password) async {
     final response = await post(
-      _endpoints['users'],
+      apiUri.resolve('users/'),
       body: jsonEncode({'email': email, 'password': password}),
     );
     if (response.statusCode != 201)
@@ -65,13 +64,15 @@ class API extends http.BaseClient {
   }
 
   Future<void> logOut() async {
-    await delete(_endpoints['users']);
+    await delete(apiUri.resolve('users/login/'));
     _headers.remove('Authorization');
   }
 
   Future<List<Listing>> getListings(int page) async {
     final response = await get(
-      _endpoints['listings'] + "?page=${page.toString()}",
+      apiUri.resolve('listings/').replace(
+        queryParameters: {'page': page.toString()},
+      ),
     );
     if (response.statusCode != 200) {
       if (response.statusCode != 404)
@@ -84,7 +85,7 @@ class API extends http.BaseClient {
 
   Future<Listing> createListing(ListingFormData formData) async {
     final response = await post(
-      _endpoints['listings'],
+      apiUri.resolve('listings/'),
       body: formData.toJson(),
     );
     if (response.statusCode != 201)
@@ -94,7 +95,7 @@ class API extends http.BaseClient {
 
   Future<ListingFormData> updateListing(ListingFormData formData) async {
     final response = await patch(
-      _endpoints['listings'] + "${formData.uuid}/",
+      apiUri.resolve('listings/${formData.uuid}/'),
       body: formData.toJson(),
     );
     if (response.statusCode != 200)

@@ -38,19 +38,19 @@ class _Create extends StatelessWidget {
       child: Consumer2<API, ListingFormData>(
         builder: (context, api, formData, _) => _Form(
           onSubmit: () {
-            AppState.waiting("Creating listing...");
+            context.waiting("Creating listing...");
             api
                 .createListing(formData)
-                .whenComplete(() => AppState.stopWaiting())
+                .whenComplete(() => context.stopWaiting())
                 .then(
               (listing) {
-                AppState.notify("Listing ${listing.title} created!");
+                context.notify("Listing ${listing.title} created!");
                 formData.clear();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => _ListingView(listing)),
                 );
               },
-            ).catchError((err) => AppState.notify(err.toString()));
+            ).catchError((err) => context.notify(err.toString()));
           },
         ),
       ),
@@ -69,17 +69,17 @@ class _Update extends StatelessWidget {
       child: Consumer2<API, ListingFormData>(
         builder: (context, api, formData, _) => _Form(
           onSubmit: () {
-            AppState.waiting("Updating listing...");
+            context.waiting("Updating listing...");
             api
                 .updateListing(formData)
-                .whenComplete(() => AppState.stopWaiting())
+                .whenComplete(() => context.stopWaiting())
                 .then(
               (savedFormData) {
-                AppState.notify("Listing ${savedFormData.title} updated!");
+                context.notify("Listing ${savedFormData.title} updated!");
                 listing.updateWithForm(savedFormData);
                 Navigator.of(context).pop();
               },
-            ).catchError((err) => AppState.notify(err.toString()));
+            ).catchError((err) => context.notify(err.toString()));
           },
         ),
       ),
@@ -90,7 +90,7 @@ class _Update extends StatelessWidget {
 class _Form extends StatelessWidget {
   final formKey = GlobalKey<FormState>();
   final Function() onSubmit;
-  _Form({this.onSubmit});
+  _Form({required this.onSubmit});
 
   @override
   Widget build(BuildContext context) {
@@ -106,15 +106,16 @@ class _Form extends StatelessWidget {
           _CategoryField(),
           SizedBox(height: 40.0),
           ElevatedButton(
-            child: Text('Submit'),
             onPressed: () {
               FocusScope.of(context).unfocus();
-              if (formKey.currentState.validate()) {
-                formKey.currentState.save();
+              var formState = formKey.currentState!;
+              if (formState.validate()) {
+                formState.save();
                 onSubmit();
-                formKey.currentState.reset();
+                formState.reset();
               }
             },
+            child: Text('Submit'),
           ),
         ],
       ),
@@ -138,7 +139,8 @@ class _TitleField extends StatelessWidget {
           ),
           keyboardType: TextInputType.text,
           initialValue: formData.title,
-          validator: (input) => input.isEmpty ? "Required" : null,
+          validator: (input) =>
+              input == null || input.isEmpty ? "Required" : null,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           onEditingComplete: () => FocusScope.of(context).nextFocus(),
           onSaved: (input) => formData.title = input,
@@ -163,12 +165,15 @@ class _PriceField extends StatelessWidget {
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           initialValue: formData.price?.toString(),
-          validator: (input) => input.length > 7 || input.length < 3
-              ? "Price must be in range 100 - 9999999"
-              : null,
+          validator: (input) =>
+              input == null || input.length < 3 || input.length > 7
+                  ? "Price must be in range 100 - 9999999"
+                  : null,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           onEditingComplete: () => FocusScope.of(context).nextFocus(),
-          onSaved: (input) => formData.price = int.parse(input),
+          onSaved: (input) {
+            if (input != null) formData.price = int.parse(input);
+          },
         ),
       ),
     );
@@ -190,7 +195,8 @@ class _DescriptionField extends StatelessWidget {
           keyboardType: TextInputType.multiline,
           maxLines: null,
           initialValue: formData.description,
-          validator: (input) => input.isEmpty ? "Required" : null,
+          validator: (input) =>
+              input == null || input.isEmpty ? "Required" : null,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           onEditingComplete: () => FocusScope.of(context).unfocus(),
           onSaved: (input) => formData.description = input,
@@ -201,12 +207,12 @@ class _DescriptionField extends StatelessWidget {
 }
 
 mixin _ErrorMessage {
-  Text showError(FormFieldState state) {
+  Text? showError(FormFieldState state) {
     var theme = Theme.of(state.context);
     return state.hasError
         ? Text(
-            state.errorText,
-            style: theme.textTheme.caption.copyWith(color: theme.errorColor),
+            state.errorText!,
+            style: theme.textTheme.caption?.copyWith(color: theme.errorColor),
           )
         : null;
   }
@@ -218,25 +224,26 @@ class _ConditionField extends StatelessWidget with _ErrorMessage {
     return Consumer<ListingFormData>(
       builder: (context, formData, _) => FormField<List<bool>>(
         initialValue: formData.conditionNew != null
-            ? [!formData.conditionNew, formData.conditionNew]
+            ? [!formData.conditionNew!, formData.conditionNew!]
             : [false, false],
-        validator: (toggles) => !toggles.contains(true) ? "Required" : null,
+        validator: (toggles) =>
+            toggles == null || !toggles.contains(true) ? "Required" : null,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        onSaved: (toggles) => formData.conditionNew = toggles[1],
+        onSaved: (toggles) => formData.conditionNew = toggles![1],
         builder: (state) => ListTile(
           contentPadding: EdgeInsets.zero,
           leading: Icon(Icons.important_devices),
           title: Text("Condition"),
           subtitle: showError(state),
           trailing: ToggleButtons(
-            children: [Text("Used"), Text("New")],
-            isSelected: state.value,
+            isSelected: state.value!,
             onPressed: (index) {
               FocusScope.of(context).unfocus();
               state.didChange(
-                List<bool>.generate(state.value.length, (i) => i == index),
+                List<bool>.generate(state.value!.length, (i) => i == index),
               );
             },
+            children: [Text("Used"), Text("New")],
           ),
         ),
       ),
@@ -261,10 +268,6 @@ class _CategoryField extends StatelessWidget with _ErrorMessage {
           title: Text("Category"),
           subtitle: showError(state),
           trailing: TextButton(
-            child: FractionallySizedBox(
-              widthFactor: 0.5,
-              child: Text(state.value, textAlign: TextAlign.end),
-            ),
             onPressed: () {
               FocusScope.of(context).unfocus();
               showDialog(
@@ -272,6 +275,10 @@ class _CategoryField extends StatelessWidget with _ErrorMessage {
                 builder: (_) => _CategoryTree(state),
               );
             },
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              child: Text(state.value!, textAlign: TextAlign.end),
+            ),
           ),
         ),
       ),
@@ -288,14 +295,14 @@ class _CategoryTree extends StatefulWidget {
 }
 
 class _CategoryTreeState extends State<_CategoryTree> {
-  Map<String, dynamic> subcategories;
-  List<String> path;
-  String title;
+  late Map<String, dynamic> subcategories;
+  late List<String> path;
+  late String title;
 
   @override
   void initState() {
     subcategories = context.read<API>().categories;
-    title = widget.state.value;
+    title = widget.state.value!;
     path = [];
     super.initState();
   }
@@ -315,7 +322,7 @@ class _CategoryTreeState extends State<_CategoryTree> {
                 subcategories = context.read<API>().categories;
                 path.removeLast();
                 path.forEach((branch) => subcategories = subcategories[branch]);
-                title = path.isNotEmpty ? path.last : widget.state.value;
+                title = path.isNotEmpty ? path.last : widget.state.value!;
               }),
             ),
           Expanded(child: Text(title, textAlign: TextAlign.center)),
