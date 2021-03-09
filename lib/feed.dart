@@ -1,19 +1,30 @@
-import 'dart:async' show Future;
-
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:quicksell_app/api.dart' show API;
 import 'package:quicksell_app/listing/lib.dart' show Listing, ListingCard;
 
-class Feed extends StatefulWidget {
-  final Map<String, dynamic>? filters;
-  Feed({this.filters});
-
+class Feed extends StatelessWidget {
   @override
-  _FeedState createState() => _FeedState();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Feed'),
+        centerTitle: true,
+      ),
+      body: FeedBuilder(),
+    );
+  }
 }
 
-class _FeedState extends State<Feed> {
+class FeedBuilder extends StatefulWidget {
+  final Map<String, dynamic>? filters;
+  FeedBuilder({this.filters});
+
+  @override
+  State createState() => _FeedState();
+}
+
+class _FeedState extends State<FeedBuilder> {
   final pagingController = PagingController<int, Listing>(firstPageKey: 1);
 
   @override
@@ -24,16 +35,10 @@ class _FeedState extends State<Feed> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Feed'),
-        centerTitle: true,
-      ),
-      body: PagedListView<int, Listing>(
-        pagingController: pagingController,
-        builderDelegate: PagedChildBuilderDelegate<Listing>(
-          itemBuilder: (_, item, __) => ListingCard(item),
-        ),
+    return PagedListView<int, Listing>(
+      pagingController: pagingController,
+      builderDelegate: PagedChildBuilderDelegate<Listing>(
+        itemBuilder: (_, item, __) => ListingCard(item),
       ),
     );
   }
@@ -44,6 +49,7 @@ class _FeedState extends State<Feed> {
       newItems.length >= 10
           ? pagingController.appendPage(newItems, pageKey + 1)
           : pagingController.appendLastPage(newItems);
+      // TODO: fix exception when pagingController is already disposed
     } catch (error) {
       pagingController.error = error;
     }

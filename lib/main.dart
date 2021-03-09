@@ -4,7 +4,7 @@ import 'package:quicksell_app/api.dart' show API;
 import 'package:quicksell_app/chats.dart' show Chats;
 import 'package:quicksell_app/feed.dart' show Feed;
 import 'package:quicksell_app/listing/lib.dart' show EditListing;
-import 'package:quicksell_app/profile/profile_main.dart' show Profile;
+import 'package:quicksell_app/profile.dart' show Profile;
 import 'package:quicksell_app/search.dart' show Search;
 import 'package:quicksell_app/state.dart' show UserState;
 

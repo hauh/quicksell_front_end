@@ -68,11 +68,12 @@ class API extends http.BaseClient {
     _headers.remove('Authorization');
   }
 
-  Future<List<Listing>> getListings(int page) async {
+  Future<List<Listing>> getListings(int page,
+      [Map<String, String>? filters]) async {
+    var queryParams = {'page': page.toString()};
+    if (filters != null) queryParams.addAll(filters);
     final response = await get(
-      apiUri.resolve('listings/').replace(
-        queryParameters: {'page': page.toString()},
-      ),
+      apiUri.resolve('listings/').replace(queryParameters: queryParams),
     );
     if (response.statusCode != 200) {
       if (response.statusCode != 404)
