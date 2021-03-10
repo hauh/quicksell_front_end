@@ -1,4 +1,5 @@
 import 'dart:convert' show json, jsonEncode, utf8;
+import 'dart:async' show StreamController, Timer;
 
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
@@ -102,6 +103,98 @@ class API extends http.BaseClient {
     if (response.statusCode != 200)
       throw Exception("Failed to update listing: \n" + response.body);
     return ListingFormData.fromJson(_decode(response));
+  }
+
+  //###########################################################################
+  final _chatController = StreamController<List<Chat>>.broadcast();
+  final _messageController = StreamController<List<Message>>.broadcast();
+  final _profileController = StreamController<Profile?>.broadcast();
+
+  late Timer _chatsTimer;
+  late Timer _messagesTimer;
+  late Timer _profileTimer;
+
+  void startChatsTimer() {
+    _chatsTimer = Timer.periodic(Duration(milliseconds: 5000), (timer) async {
+      _chatController.sink.add(await API().getChats());
+    });
+  }
+
+  void startMessagesTimer(String uuid) {
+    _messagesTimer =
+        Timer.periodic(Duration(milliseconds: 1000), (timer) async {
+      _messageController.sink.add(await API().getChatMessages(uuid));
+    });
+  }
+
+  void startProfileTimer(String uuid) {
+    _profileTimer = Timer.periodic(Duration(milliseconds: 5000), (timer) async {
+      _profileController.sink.add(await API().getProfile(uuid));
+    });
+  }
+
+  //###########################################################################
+
+  void stopChatsTimer() => _chatsTimer.cancel();
+  void stopMessagesTimer() => _messagesTimer.cancel();
+  void stopProfileTimer() => _profileTimer.cancel();
+
+  Stream<List<Chat>> get chatsStream => _chatController.stream;
+  Stream<List<Message>> get messagesStream => _messageController.stream;
+  Stream<Profile?> get profileStream => _profileController.stream;
+
+  Future<List<Chat>> getChats() async {
+    var response = await get(apiUri.resolve('chats/'));
+    if (response.statusCode != 200) {
+      if (response.statusCode != 404) throw Exception("Failed to get chats!");
+      return <Chat>[];
+    }
+
+    List<dynamic> chats = _decode(response)['results'];
+    return (chats.map((data) => Chat.fromJson(data)).toList());
+  }
+
+  Future<List<Message>> getChatMessages(String uuid) async {
+    var response = await get(apiUri.resolve('chats/$uuid/'));
+    if (response.statusCode != 200) {
+      if (response.statusCode != 404)
+        throw Exception("Failed to get messages!");
+      return <Message>[];
+    }
+
+    List<dynamic> messages = json.decode(utf8.decode(response.bodyBytes));
+    return (messages.map((data) => Message.fromJson(data)).toList());
+  }
+
+  Future<List<Chat>> getChatsWithMessages() async {
+    List<Chat> chats = await getChats();
+
+    for (var chat in chats) {
+      chat.messages = await getChatMessages(chat.uuid);
+    }
+
+    return (chats);
+  }
+
+  Future<Profile?> getProfile(String uuid) async {
+    var response = await get(apiUri.resolve('profiles/$uuid/'));
+
+    if (response.statusCode != 200) {
+      if (response.statusCode != 404) throw Exception("Failed to get profile!");
+      return null;
+    }
+
+    return (Profile.fromJson(_decode(response)));
+  }
+
+  Future<Message> createMessage(String uuid, String text) async {
+    final response = await post(
+      apiUri.resolve('chats/$uuid/'),
+      body: jsonEncode({"text": text}),
+    );
+    if (response.statusCode != 201)
+      throw Exception("Failed to create message: \n" + response.body);
+    return Message.fromJson(_decode(response));
   }
 
   void dispose() => _client.close();
