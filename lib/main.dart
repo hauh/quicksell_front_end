@@ -7,6 +7,7 @@ import 'package:quicksell_app/listing/lib.dart' show EditListing;
 import 'package:quicksell_app/profile.dart' show Profile;
 import 'package:quicksell_app/search.dart' show Search;
 import 'package:quicksell_app/state.dart' show UserState;
+import 'package:quicksell_app/map.dart' show mapInit;
 
 void main() => runApp(
       MultiProvider(
@@ -27,6 +28,7 @@ class QuicksellApp extends StatelessWidget {
   static const String title = 'Quicksell App';
   @override
   Widget build(BuildContext context) {
+    mapInit();
     return MaterialApp(
       title: title,
       home: FutureBuilder<bool>(

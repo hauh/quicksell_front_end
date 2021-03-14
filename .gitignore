@@ -40,6 +40,6 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-old
-urls.json
 api_url
+plugins/
+secrets.xml

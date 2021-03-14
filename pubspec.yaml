@@ -34,6 +34,9 @@ dependencies:
   url_launcher: ^6.0.2
   flutter_signin_button: ^2.0.0-nullsafety.0
   provider: ^5.0.0
+  geolocator: ^7.0.1
+  here_sdk:
+    path: plugins/here_sdk
 
 dev_dependencies:
   flutter_test:

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:quicksell_app/api.dart' show API;
 import 'package:quicksell_app/listing/lib.dart' show Listing, ListingCard;
+import 'package:quicksell_app/map.dart';
 
 class Feed extends StatelessWidget {
   @override
@@ -10,6 +11,14 @@ class Feed extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Feed'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.map),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => MapView()),
+            ),
+          ),
+        ],
       ),
       body: FeedBuilder(),
     );
