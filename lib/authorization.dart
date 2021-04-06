@@ -7,6 +7,7 @@ import 'package:quicksell_app/state.dart' show UserState;
 
 class AuthenticationRequired extends StatelessWidget {
   final Widget child;
+
   AuthenticationRequired({required this.child});
 
   @override

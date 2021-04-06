@@ -1,4 +1,4 @@
-part of chats;
+part of chat;
 
 class ChatSearch extends StatefulWidget {
   @override
@@ -115,7 +115,7 @@ class _ChatSearchState extends State<ChatSearch> {
   }
 
   void populateChats() async {
-    List<Chat> chats = await API().getChatsWithMessages();
+    List<Chat> chats = await API().getChats();
     setState(() => _chats = chats);
   }
 }

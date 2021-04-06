@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "520050814803",
+    "project_id": "quicksell-e9851",
+    "storage_bucket": "quicksell-e9851.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:520050814803:android:37fd96e093a3af3ad3fba6",
+        "android_client_info": {
+          "package_name": "app.prosto.quicksell"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "520050814803-jmt5ntqvtbmalq871ev76u4rlekv5kr7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjCLz3HSK7EyG0rMPiuY7nWy_iGi7Oogw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "520050814803-jmt5ntqvtbmalq871ev76u4rlekv5kr7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

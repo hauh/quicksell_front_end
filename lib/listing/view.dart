@@ -73,7 +73,7 @@ class _ListingViewState extends State<_ListingView> {
             Divider(color: Colors.black),
             listing.seller == context.read<UserState>().user?.profile
                 ? _Edit(listing)
-                : _Contact(listing.seller),
+                : _Contact(listing),
             Divider(color: Colors.black),
             _Location(listing.location),
             Divider(color: Colors.black),
@@ -179,8 +179,9 @@ class _Price extends StatelessWidget {
 }
 
 class _Contact extends StatelessWidget {
-  final Profile seller;
-  _Contact(this.seller);
+  final Listing listing;
+
+  _Contact(this.listing);
 
   @override
   Widget build(BuildContext context) {
@@ -194,12 +195,19 @@ class _Contact extends StatelessWidget {
               child: Text('Call'),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/chats'),
+              onPressed: () {
+                API().createChat(listing.seller.uuid, listing.uuid, "Hello")
+                  .then((value) => Navigator.push(
+                    context, MaterialPageRoute(builder: (context) => ChatRoom(chat: value))
+                  )
+                );
+                Navigator.pushNamed(context, '/chats');
+              },
               child: Text('Chat'),
             ),
           ],
         ),
-        Text('Online status: ${seller.online}'),
+        Text('Online status: ${listing.seller.online}'),
       ],
     );
   }

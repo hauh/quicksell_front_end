@@ -11,6 +11,7 @@ import 'package:quicksell_app/extensions.dart';
 import 'package:quicksell_app/models.dart' show Profile;
 import 'package:quicksell_app/state.dart' show AppState, UserState;
 import 'package:url_launcher/url_launcher.dart' show launch;
+import 'package:quicksell_app/chat/lib.dart';
 
 part 'edit.dart';
 part 'model.dart';
