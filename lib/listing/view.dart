@@ -195,14 +195,13 @@ class _Contact extends StatelessWidget {
               child: Text('Call'),
             ),
             ElevatedButton(
-              onPressed: () {
-                API().createChat(listing.seller.uuid, listing.uuid, "Hello")
-                  .then((value) => Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => ChatRoom(chat: value))
-                  )
-                );
-                Navigator.pushNamed(context, '/chats');
-              },
+              onPressed: () => context.read<UserState>().authenticated
+                  ? Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ChatRoom.initChat(listing),
+                      ),
+                    )
+                  : context.notify("You must sign in first"),
               child: Text('Chat'),
             ),
           ],

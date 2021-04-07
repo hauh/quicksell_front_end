@@ -1,20 +1,19 @@
 part of chat;
 
 class ChatRoom extends StatelessWidget {
-  final Chat _chat;
+  final Chat chat;
 
-  ChatRoom({ required Chat chat }) : _chat = chat;
+  ChatRoom(this.chat);
+  ChatRoom.initChat(Listing listing) : chat = Chat.prepareFromListing(listing);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(55),
-        child: ChatRoomTopBar(chat: _chat),
+        child: ChatRoomTopBar(listing: chat.listing),
       ),
-      body: ChatRoomBody(chatUuid: _chat.uuid),
+      body: ChatRoomBody(chat),
     );
   }
 }
-
-

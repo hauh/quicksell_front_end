@@ -11,14 +11,16 @@ class ChatRoomTopBarInterlocutor extends StatefulWidget {
       _ChatRoomTopBarInterlocutorState();
 }
 
-class _ChatRoomTopBarInterlocutorState extends State<ChatRoomTopBarInterlocutor> {
+class _ChatRoomTopBarInterlocutorState
+    extends State<ChatRoomTopBarInterlocutor> {
   @override
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
         Expanded(
           child: CircleAvatar(
-            backgroundImage: NetworkImage("https://source.unsplash.com/random/200x200"),
+            backgroundImage:
+                NetworkImage("https://source.unsplash.com/random/200x200"),
           ),
         ),
         Expanded(
@@ -40,7 +42,9 @@ class _ChatRoomTopBarInterlocutorState extends State<ChatRoomTopBarInterlocutor>
 class ChatRoomTopBarDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(child: VerticalDivider(color: Colors.black, thickness: 1.0, endIndent: 7.0, indent: 7.0));
+    return Container(
+        child: VerticalDivider(
+            color: Colors.black, thickness: 1.0, endIndent: 7.0, indent: 7.0));
   }
 }
 
@@ -54,16 +58,15 @@ class ChatRoomTopBarListing extends StatelessWidget {
     return Row(
       children: <Widget>[
         Expanded(
-          flex: 2,
-          child: Center(
-            child: Text(
-              _listing.title, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 16)
-            )
-          )
-        ),
+            flex: 2,
+            child: Center(
+                child: Text(_listing.title,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 16)))),
         Expanded(
           child: CircleAvatar(
-            backgroundImage: NetworkImage("https://source.unsplash.com/random/200x200"),
+            backgroundImage:
+                NetworkImage("https://source.unsplash.com/random/200x200"),
           ),
         ),
       ],
@@ -72,44 +75,48 @@ class ChatRoomTopBarListing extends StatelessWidget {
 }
 
 class ChatRoomTopBar extends StatelessWidget {
-  final Chat _chat;
+  final Listing _listing;
 
-  ChatRoomTopBar({required Chat chat}) : _chat = chat;
+  ChatRoomTopBar({required Listing listing}) : _listing = listing;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         boxShadow: <BoxShadow>[
-          BoxShadow(color: Colors.grey.shade500, blurRadius: 5, spreadRadius: 2,)
+          BoxShadow(
+            color: Colors.grey.shade500,
+            blurRadius: 5,
+            spreadRadius: 2,
+          )
         ],
         gradient: LinearGradient(
-          begin: Alignment.centerLeft, end: Alignment.centerRight,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
           colors: [Colors.blue.shade200, Colors.blue.shade500],
-        )
+        ),
       ),
       child: SafeArea(
         child: Row(
           children: <Widget>[
             Expanded(
-              child: IconButton(
-                icon: Icon(Icons.arrow_back, size: 30),
-                onPressed: () => Navigator.pop(context)
-              )
-            ),
+                child: IconButton(
+                    icon: Icon(Icons.arrow_back, size: 30),
+                    onPressed: () => Navigator.pop(context))),
             Expanded(
-              flex: 3,
-              child: ChatRoomTopBarInterlocutor(interlocutor: _chat.interlocutor,)
-            ),
+                flex: 3,
+                child: ChatRoomTopBarInterlocutor(
+                  interlocutor: _listing.seller,
+                )),
             Expanded(
               child: ChatRoomTopBarDivider(),
             ),
             Expanded(
               flex: 4,
-              child: ChatRoomTopBarListing(listing: _chat.listing),
+              child: ChatRoomTopBarListing(listing: _listing),
             ),
           ],
-        )
+        ),
       ),
     );
   }

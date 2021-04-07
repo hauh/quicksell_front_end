@@ -97,10 +97,10 @@ class _ChatSearchState extends State<ChatSearch> {
                 maxRadius: 30),
             title: Text(_chats[index].subject),
             trailing: Text(_chats[index].listing.price.toString()),
-            subtitle: _chats[index].latestMessage.read
-                ? Text(_chats[index].latestMessage.text,
+            subtitle: _chats[index].latestMessage!.read
+                ? Text(_chats[index].latestMessage!.text,
                     style: TextStyle(color: Colors.brown[10]))
-                : Text(_chats[index].latestMessage.text,
+                : Text(_chats[index].latestMessage!.text,
                     style: TextStyle(color: Colors.brown[10])),
             onTap: () => Navigator.push(
               context,

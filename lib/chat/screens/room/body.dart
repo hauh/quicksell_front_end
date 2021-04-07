@@ -1,110 +1,165 @@
 part of chat;
 
 class ChatRoomBody extends StatefulWidget {
-  final String _chatUuid;
+  final Chat chat;
 
-  ChatRoomBody({required String chatUuid}) : _chatUuid = chatUuid;
+  ChatRoomBody(this.chat);
 
   @override
   _ChatRoomBodyState createState() => _ChatRoomBodyState();
 }
 
 class _ChatRoomBodyState extends State<ChatRoomBody> {
-  TextEditingController? _inputController;
-  ScrollController? _scrollController;
-  List<Message>? _messages;
-  var logger = Logger();
-  var listener;
+  late Chat chat;
+  late TextEditingController controller;
 
   @override
   void initState() {
+    chat = widget.chat;
+    controller = TextEditingController();
+    notificationQueue.addListener(refresh);
     super.initState();
-    _inputController = TextEditingController();
-    _scrollController = ScrollController()..addListener(onScroll);
-    print("Hello from init");
-    listener = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      // if (_messages == null) return; // TODO: queue message to try next time
-      logger.d("FCM foreground data:\n${message.data}");
-      if (message.notification != null) {
-        logger.d("Additional FCM foreground data: ${message.notification}");
+  }
+
+  void refresh() => mounted ? setState(() {}) : null;
+
+  void sendMessage() {
+    if (controller.text.isNotEmpty) {
+      if (chat.uuid.isEmpty) {
+        API()
+            .createChat(
+          chat.interlocutor.uuid,
+          chat.listing.uuid,
+          controller.text,
+        )
+            .then((newChat) {
+          chat.uuid = newChat.uuid;
+          chat.latestMessage = newChat.latestMessage;
+          refresh();
+        });
+      } else {
+        API().createMessage(chat.uuid, controller.text).then((_) => refresh());
       }
-      setState(() {}); //TODO: Send message itself in message.data
-      _scrollController!.animateTo(0.0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
-      //TODO: Insert new data without bothering server
-    });
+      controller.clear();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: API().getChatMessages(widget._chatUuid),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            _messages = snapshot.data as List<Message>;
-            if (_messages!.isEmpty) {
-              return Center(
+    return Column(
+      children: [
+        Expanded(
+          child: chat.uuid.isEmpty
+              ? Center(
                   child: Text(
-                    "Empty", style: TextStyle(fontSize: 23, color: Colors.grey),
-                  )
-              );
-            }
-            return Scaffold(
-              body: SingleChildScrollView(
-                controller: _scrollController,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    ListView.builder(
-                      itemCount: _messages!.length,
-                      reverse: true,
-                      shrinkWrap: true,
-                      padding: EdgeInsets.only(top: 10, bottom: 10),
-                      physics: NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        return Container(
-                          padding: EdgeInsets.only(
-                              left: 14, right: 14, top: 10, bottom: 10),
-                          child: Align(
-                            alignment: (_messages![index].is_yours == false
-                                ? Alignment.topLeft
-                                : Alignment.topRight),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: (_messages![index].is_yours == false
-                                    ? Colors.grey.shade200
-                                    : Colors.blue[200]),
-                              ),
-                              padding: EdgeInsets.all(16),
-                              child: Text(
-                                _messages![index].text,
-                                style: TextStyle(fontSize: 15),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+                    "No messages here yet",
+                    style: TextStyle(fontSize: 23, color: Colors.grey),
+                  ),
                 )
-              ),
-              bottomNavigationBar: Container(
-                child: ChatRoomBottomBar(chatUuid: widget._chatUuid),
-              ),
-            );
-          }
-          else {
-            return Center(child: CircularProgressIndicator());
-          }
-        }
+              : FutureBuilder(
+                  future: API().getChatMessages(chat.uuid),
+                  builder: (_, AsyncSnapshot<List<Message>> snapshot) =>
+                      snapshot.hasData
+                          ? MessagesList(snapshot.data!)
+                          : Center(child: CircularProgressIndicator()),
+                ),
+        ),
+        SizedBox(height: 10),
+        ChatRoomBottomBar(
+          onPressed: sendMessage,
+          controller: controller,
+        ),
+        SizedBox(height: 10)
+      ],
     );
   }
 
-  void onScroll() => null;
-
+  @override
   void dispose() {
-    _scrollController!.removeListener(onScroll);
-    listener.remove();
+    controller.dispose();
     super.dispose();
+  }
+}
+
+class MessagesList extends StatelessWidget {
+  final List<Message> messages;
+
+  MessagesList(this.messages);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      reverse: true,
+      itemBuilder: (_, index) => MessageTile(messages[index]),
+      itemCount: messages.length,
+    );
+  }
+}
+
+class MessageTile extends StatelessWidget {
+  final Message message;
+
+  MessageTile(this.message);
+
+  @override
+  Widget build(BuildContext context) {
+    var color, alignment;
+    if (message.is_yours) {
+      color = Colors.blue[200];
+      alignment = Alignment.topRight;
+    } else {
+      color = Colors.grey.shade200;
+      alignment = Alignment.topLeft;
+    }
+    return Container(
+      padding: EdgeInsets.only(left: 14, right: 14, top: 10, bottom: 10),
+      child: Align(
+        alignment: alignment,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: color,
+          ),
+          padding: EdgeInsets.all(16),
+          child: Text(
+            message.text,
+            style: TextStyle(fontSize: 15),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ChatRoomBottomBar extends StatelessWidget {
+  final Function() onPressed;
+  final TextEditingController controller;
+
+  ChatRoomBottomBar({required this.onPressed, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        SizedBox(width: 10),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            decoration: InputDecoration(
+                hintText: "Write a message...",
+                hintStyle: TextStyle(color: Colors.black54),
+                border: OutlineInputBorder()),
+          ),
+        ),
+        SizedBox(width: 15),
+        FloatingActionButton(
+          onPressed: onPressed,
+          backgroundColor: Colors.blue,
+          elevation: 0,
+          child: Icon(Icons.send, color: Colors.white, size: 18),
+        ),
+        SizedBox(width: 15),
+      ],
+    );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:quicksell_app/models.dart' show User;
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AppState {
   static final Function datetimeFormat = DateFormat("dd.MM.yyyy HH:mm").format;
