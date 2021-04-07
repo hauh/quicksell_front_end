@@ -119,8 +119,12 @@ class API extends http.BaseClient {
     return ListingFormData.fromJson(_decode(response));
   }
 
-  Future<List<Chat>> getChats() async {
-    var response = await get(apiUri.resolve('chats/'));
+  Future<List<Chat>> getChats(int page, [Map<String, String>? filters]) async {
+    var queryParams = {'page': page.toString()};
+    if (filters != null) queryParams.addAll(filters);
+    final response = await get(
+      apiUri.resolve('chats/').replace(queryParameters: queryParams),
+    );
     if (response.statusCode != 200) {
       if (response.statusCode != 404) throw Exception("Failed to get chats!");
       return <Chat>[];
@@ -130,8 +134,13 @@ class API extends http.BaseClient {
     return (chats.map((data) => Chat.fromJson(data)).toList());
   }
 
-  Future<List<Message>> getChatMessages(String uuid) async {
-    var response = await get(apiUri.resolve('chats/$uuid/'));
+  Future<List<Message>> getMessages(String uuid, int page,
+      [Map<String, String>? filters]) async {
+    var queryParams = {'page': page.toString()};
+    if (filters != null) queryParams.addAll(filters);
+    final response = await get(
+      apiUri.resolve('chats/$uuid/').replace(queryParameters: queryParams),
+    );
     if (response.statusCode != 200) {
       if (response.statusCode != 404)
         throw Exception("Failed to get messages!");

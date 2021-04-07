@@ -6,45 +6,48 @@ class ChatListBody extends StatefulWidget {
 }
 
 class _ChatListBodyState extends State<ChatListBody> {
+  final pagingController = PagingController<int, Chat>(firstPageKey: 1);
+
   @override
   void initState() {
     super.initState();
+    pagingController.addPageRequestListener((pageKey) => fetchPage(pageKey));
     notificationQueue.addListener(refresh);
   }
 
-  void refresh() => mounted ? setState(() {}) : null;
+  void refresh() => mounted ? { setState(() {}), pagingController.refresh() }: null;
+
+  Future<void> fetchPage(int pageKey) async {
+    try {
+      final newItems = await API().getChats(pageKey);
+      newItems.sort((a, b) => b.latestMessage!.timestamp.compareTo(a.latestMessage!.timestamp));
+      if (newItems.length >= 10) {
+        pagingController.appendPage(newItems, pageKey + 1);
+      } else {
+        pagingController.appendLastPage(newItems);
+      }
+    } catch (error) {
+      pagingController.error = error;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: API().getChats(), //TODO: Lazy loading for chats
-      builder: (context, AsyncSnapshot<List<Chat>> snapshot) => snapshot.hasData
-          ? snapshot.data!.isEmpty
-              ? Center(
-                  child: Text(
-                    "You do not have any messages yet!",
-                    style: TextStyle(fontSize: 23, color: Colors.grey),
-                  ),
-                )
-              : ChatsList(snapshot.data!)
-          : Center(child: CircularProgressIndicator()),
+    // return ChatsList();
+    return PagedListView<int, Chat>(
+      // reverse: true,
+      pagingController: pagingController,
+      builderDelegate: PagedChildBuilderDelegate<Chat>(
+        firstPageProgressIndicatorBuilder: (context) => Center(),
+        itemBuilder: (_, item, __) => ChatTile(item)
+      ),
     );
   }
-}
-
-class ChatsList extends StatelessWidget {
-  final List<Chat> chatsList;
-
-  ChatsList(this.chatsList);
 
   @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      shrinkWrap: true,
-      padding: EdgeInsets.only(top: 7),
-      itemCount: chatsList.length,
-      itemBuilder: (_, index) => ChatTile(chatsList[index]),
-    );
+  void dispose() {
+    pagingController.dispose();
+    super.dispose();
   }
 }
 

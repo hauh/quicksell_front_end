@@ -3,6 +3,7 @@ library chat;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 import 'package:quicksell_app/models.dart';
 import 'package:quicksell_app/api.dart';
@@ -22,6 +23,6 @@ part 'screens/room/room.dart';
 part 'screens/room/top_bar.dart';
 part 'screens/room/body.dart';
 
-part 'screens/search/search.dart';
+// part 'screens/search/search.dart';
 
 part 'screens/black_list/black_list.dart';

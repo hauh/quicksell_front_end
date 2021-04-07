@@ -10,15 +10,17 @@ class ChatRoomBody extends StatefulWidget {
 }
 
 class _ChatRoomBodyState extends State<ChatRoomBody> {
-  late Chat chat;
+  final pagingController = PagingController<int, Message>(firstPageKey: 1);
   late TextEditingController controller;
+  late Chat chat;
 
   @override
   void initState() {
-    chat = widget.chat;
-    controller = TextEditingController();
-    notificationQueue.addListener(refresh);
     super.initState();
+    pagingController.addPageRequestListener((pageKey) => fetchPage(pageKey));
+    notificationQueue.addListener(refresh);
+    controller = TextEditingController();
+    chat = widget.chat;
   }
 
   void refresh() => mounted ? setState(() {}) : null;
@@ -39,8 +41,22 @@ class _ChatRoomBodyState extends State<ChatRoomBody> {
         });
       } else {
         API().createMessage(chat.uuid, controller.text).then((_) => refresh());
+        pagingController.refresh();
       }
       controller.clear();
+    }
+  }
+
+  Future<void> fetchPage(int pageKey) async {
+    try {
+      final newItems = await API().getMessages(chat.uuid, pageKey);
+      if (newItems.length >= 10) {
+        pagingController.appendPage(newItems, pageKey + 1);
+      } else {
+        pagingController.appendLastPage(newItems);
+      }
+    } catch (error) {
+      pagingController.error = error;
     }
   }
 
@@ -56,13 +72,13 @@ class _ChatRoomBodyState extends State<ChatRoomBody> {
                     style: TextStyle(fontSize: 23, color: Colors.grey),
                   ),
                 )
-              : FutureBuilder(
-                  future: API().getChatMessages(chat.uuid),
-                  builder: (_, AsyncSnapshot<List<Message>> snapshot) =>
-                      snapshot.hasData
-                          ? MessagesList(snapshot.data!)
-                          : Center(child: CircularProgressIndicator()),
-                ),
+              : PagedListView(
+                  reverse: true,
+                  pagingController: pagingController,
+                  builderDelegate: PagedChildBuilderDelegate<Message>(
+                    itemBuilder: (_, item, __) => MessageTile(item)
+                  ),
+                )
         ),
         SizedBox(height: 10),
         ChatRoomBottomBar(
@@ -76,23 +92,9 @@ class _ChatRoomBodyState extends State<ChatRoomBody> {
 
   @override
   void dispose() {
+    pagingController.dispose();
     controller.dispose();
     super.dispose();
-  }
-}
-
-class MessagesList extends StatelessWidget {
-  final List<Message> messages;
-
-  MessagesList(this.messages);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      reverse: true,
-      itemBuilder: (_, index) => MessageTile(messages[index]),
-      itemCount: messages.length,
-    );
   }
 }
 
