@@ -14,7 +14,7 @@ class NotificationQueue with ChangeNotifier {
 
 final notificationQueue = NotificationQueue();
 
-void init() {
+void initNotifications() {
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
     notificationQueue.put(message);
   });

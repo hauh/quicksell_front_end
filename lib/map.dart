@@ -9,7 +9,7 @@ import 'package:quicksell_app/extensions.dart';
 // The Kremlin
 final defaultCoordinates = GeoCoordinates(55.7520, 37.6175);
 
-void mapInit() => SdkContext.init(IsolateOrigin.main);
+void initMap() => SdkContext.init(IsolateOrigin.main);
 
 class MapView extends StatefulWidget {
   @override
