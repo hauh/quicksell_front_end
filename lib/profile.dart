@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:quicksell_app/authorization.dart' show AuthenticationRequired;
 import 'package:quicksell_app/feed.dart' show FeedBuilder;
-import 'package:quicksell_app/state.dart' show AppState, UserState;
+import 'package:quicksell_app/extensions.dart';
 
 class Profile extends StatelessWidget {
   @override
@@ -40,9 +39,9 @@ class Profile extends StatelessWidget {
           body: TabBarView(
             children: [
               _ProfileView(),
-              FeedBuilder(filters: {
-                'seller': context.read<UserState>().user?.profile.uuid
-              }),
+              FeedBuilder(
+                filters: {'seller': context.appState.user?.profile.uuid},
+              ),
               _Favorites(),
               _Settings(),
             ],
@@ -56,8 +55,7 @@ class Profile extends StatelessWidget {
 class _ProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    var userState = context.read<UserState>();
-    var profile = userState.user!.profile;
+    var profile = context.appState.user!.profile;
 
     return Container(
       width: MediaQuery.of(context).size.width,
@@ -65,7 +63,7 @@ class _ProfileView extends StatelessWidget {
       child: ListView(
         children: [
           ElevatedButton(
-            onPressed: () => userState.logOut(),
+            onPressed: () => context.appState.logOut(),
             child: Text("Log out"),
           ),
           Row(
@@ -89,7 +87,7 @@ class _ProfileView extends StatelessWidget {
                       Text("Rating: ${profile.rating}"),
                       Text(
                         "Registration date: "
-                        "${AppState.datetimeFormat(profile.dateCreated)}",
+                        "${context.appState.datetime(profile.dateCreated)}",
                       ),
                     ],
                   ),

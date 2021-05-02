@@ -71,7 +71,7 @@ class _ListingViewState extends State<_ListingView> {
             Divider(color: Colors.black),
             _Price(listing.price),
             Divider(color: Colors.black),
-            listing.seller == context.read<UserState>().user?.profile
+            listing.seller == context.appState.user?.profile
                 ? _Edit(listing)
                 : _Contact(listing),
             Divider(color: Colors.black),
@@ -195,7 +195,7 @@ class _Contact extends StatelessWidget {
               child: Text('Call'),
             ),
             ElevatedButton(
-              onPressed: () => context.read<UserState>().authenticated
+              onPressed: () => context.appState.authenticated
                   ? Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => ChatRoom.initChat(listing),

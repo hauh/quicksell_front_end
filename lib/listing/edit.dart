@@ -301,7 +301,7 @@ class _CategoryTreeState extends State<_CategoryTree> {
 
   @override
   void initState() {
-    subcategories = context.read<API>().categories;
+    subcategories = context.api.categories;
     title = widget.state.value!;
     path = [];
     super.initState();
@@ -319,7 +319,7 @@ class _CategoryTreeState extends State<_CategoryTree> {
             IconButton(
               icon: Icon(Icons.arrow_back),
               onPressed: () => setState(() {
-                subcategories = context.read<API>().categories;
+                subcategories = context.api.categories;
                 path.removeLast();
                 path.forEach((branch) => subcategories = subcategories[branch]);
                 title = path.isNotEmpty ? path.last : widget.state.value!;

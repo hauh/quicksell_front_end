@@ -1,31 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:here_sdk/core.dart';
 import 'package:intl/intl.dart';
 import 'package:quicksell_app/models.dart' show User;
 
-class AppState {
+class AppState with ChangeNotifier {
   static final Function datetimeFormat = DateFormat("dd.MM.yyyy HH:mm").format;
   static final Function currencyFormat = NumberFormat.currency(
     locale: 'ru_RU',
     symbol: '₽',
     decimalDigits: 0,
   ).format;
-}
 
-class UserState with ChangeNotifier {
-  bool _authenticated = false;
-  String? fcm_id;
+  GeoCoordinates location;
+  bool authenticated = false;
+  String? fcmId;
   User? user;
 
-  bool get authenticated => _authenticated;
+  AppState({required this.location, required this.fcmId})
+      : authenticated = false;
+
+  Function get currency => AppState.currencyFormat;
+  Function get datetime => AppState.datetimeFormat;
 
   void logIn(User user) {
-    _authenticated = true;
+    authenticated = true;
     this.user = user;
     notifyListeners();
   }
 
   void logOut() {
-    _authenticated = false;
+    authenticated = false;
     user = null;
     notifyListeners();
   }

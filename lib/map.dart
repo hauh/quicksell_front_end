@@ -6,10 +6,11 @@ import 'package:here_sdk/mapview.dart';
 import 'package:here_sdk/search.dart';
 import 'package:quicksell_app/extensions.dart';
 
-// The Kremlin
-final defaultCoordinates = GeoCoordinates(55.7520, 37.6175);
-
-void initMap() => SdkContext.init(IsolateOrigin.main);
+Future<GeoCoordinates> initMap() async {
+  SdkContext.init(IsolateOrigin.main);
+  var currentPosition = await Geolocator.getCurrentPosition();
+  return GeoCoordinates(currentPosition.latitude, currentPosition.longitude);
+}
 
 class MapView extends StatefulWidget {
   @override
@@ -26,7 +27,7 @@ class _MapViewState extends State<MapView> {
   void initState() {
     addressNotifier = ValueNotifier("Set your address");
     searchEngine = SearchEngine();
-    currentCoordinates = defaultCoordinates;
+    currentCoordinates = context.appState.location;
     super.initState();
   }
 

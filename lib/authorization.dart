@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
-import 'package:quicksell_app/api.dart' show API;
 import 'package:quicksell_app/extensions.dart';
-import 'package:quicksell_app/state.dart' show UserState;
+import 'package:quicksell_app/state.dart' show AppState;
 
 class AuthenticationRequired extends StatelessWidget {
   final Widget child;
@@ -12,7 +11,7 @@ class AuthenticationRequired extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<UserState>(
+    return Consumer<AppState>(
       builder: (context, userState, child) =>
           userState.authenticated ? child! : _Authorization(),
       child: child,
@@ -114,13 +113,12 @@ class _SignInState extends State<_SignInView> {
     FocusScope.of(context).unfocus();
     if (formKey.currentState!.validate()) {
       context.waiting("Authorizing...");
-      context
-          .read<API>()
+      context.api
           .authenticate(emailController.text, passwordController.text)
           .whenComplete(() => context.stopWaiting())
           .then(
         (user) {
-          context.read<UserState>().logIn(user);
+          context.appState.logIn(user);
           context.notify("Welcome back, ${user.profile.fullName}!");
           Navigator.of(context).pop();
         },
@@ -173,16 +171,16 @@ class _SignUpState extends State<_SignUpView> {
     FocusScope.of(context).unfocus();
     if (formKey.currentState!.validate()) {
       context.waiting("Creating account...");
-      context
-          .read<API>()
+      context.api
           .createAccount(
             emailController.text,
             passwordController.text,
+            context.appState.fcmId!,
           )
           .whenComplete(() => context.stopWaiting())
           .then(
         (userModel) {
-          context.read<UserState>().logIn(userModel);
+          context.appState.logIn(userModel);
           context.notify("Welcome, ${userModel.profile.fullName}!");
           Navigator.of(context).pop();
         },

@@ -1,5 +1,9 @@
 include: package:pedantic/analysis_options.yaml
 
+analyzer:
+  exclude: 
+    - plugins/**
+
 linter:
   rules:
     prefer_single_quotes: false

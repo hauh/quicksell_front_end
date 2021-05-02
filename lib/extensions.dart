@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:quicksell_app/api.dart' show API;
+import 'package:quicksell_app/state.dart' show AppState;
+
+extension Getters on BuildContext {
+  API get api => read<API>();
+  AppState get appState => read<AppState>();
+}
 
 extension NotificationSnackBar on BuildContext {
-  void notify(String message) {
-    print(message);
+  Null notify(String message) {
     ScaffoldMessenger.of(this).showSnackBar(
       SnackBar(
         content: Text(message),

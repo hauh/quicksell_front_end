@@ -1,8 +1,5 @@
 import 'dart:convert' show json, jsonEncode, utf8;
 
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:quicksell_app/listing/lib.dart' show Listing, ListingFormData;
@@ -28,19 +25,17 @@ class API extends http.BaseClient {
     return _client.send(request).timeout(Duration(seconds: 30));
   }
 
+  Map<String, dynamic> _decode(http.Response response) =>
+      json.decode(utf8.decode(response.bodyBytes));
+
   Future<bool> init() async {
     apiUri = Uri.parse(await rootBundle.loadString('assets/api_url'));
     final response = await get(apiUri.resolve('info/'));
     if (response.statusCode != 200) return false;
     _categories = _decode(response)['categories'];
 
-    await Firebase.initializeApp();
-
     return true;
   }
-
-  Map<String, dynamic> _decode(http.Response response) =>
-      json.decode(utf8.decode(response.bodyBytes));
 
   Future<void> authorize(String email, String password) async {
     final response = await post(
@@ -55,18 +50,17 @@ class API extends http.BaseClient {
     await authorize(email, password);
     final response = await get(apiUri.resolve('users/'));
     if (response.statusCode != 200) throw Exception("Authentication failed.");
-    String? fcm_id = await FirebaseMessaging.instance.getToken();
     return User.fromJson(_decode(response));
   }
 
-  Future<User> createAccount(String email, String password) async {
-    String? fcm_id = await FirebaseMessaging.instance.getToken();
+  Future<User> createAccount(
+      String email, String password, String fcmId) async {
     final response = await post(
       apiUri.resolve('users/'),
       body: jsonEncode({
         'email': email,
         'password': password,
-        'fcm_id': fcm_id,
+        'fcm_id': fcmId,
         'full_name': "Bill Gates"
       }),
     );

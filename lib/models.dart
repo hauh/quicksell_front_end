@@ -1,3 +1,4 @@
+import 'package:here_sdk/core.dart';
 import 'package:quicksell_app/listing/lib.dart';
 
 class Profile {
@@ -8,7 +9,7 @@ class Profile {
   final bool online;
   final int rating;
   final String? avatar;
-  final int? location;
+  late GeoCoordinates? location;
 
   Profile.fromJson(Map<String, dynamic> json)
       : uuid = json['uuid'],
@@ -17,8 +18,7 @@ class Profile {
         about = json['about'],
         online = json['online'],
         rating = json['rating'],
-        avatar = json['avatar'],
-        location = json['location'];
+        avatar = json['avatar'];
 
   @override
   bool operator ==(Object rhs) => rhs is Profile && rhs.uuid == uuid;

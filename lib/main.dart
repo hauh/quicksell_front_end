@@ -9,24 +9,9 @@ import 'package:quicksell_app/map.dart' show initMap;
 import 'package:quicksell_app/notifications.dart' show initNotifications;
 import 'package:quicksell_app/profile.dart' show Profile;
 import 'package:quicksell_app/search.dart' show Search;
-import 'package:quicksell_app/state.dart' show UserState;
+import 'package:quicksell_app/state.dart' show AppState;
 
-void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<UserState>(
-          create: (_) => UserState(),
-        ),
-        Provider<API>(
-          create: (_) => API(),
-          dispose: (_, api) => api.dispose(),
-        ),
-      ],
-      child: QuicksellApp(),
-    ),
-  );
-}
+void main() => runApp(QuicksellApp());
 
 class QuicksellApp extends StatefulWidget {
   @override
@@ -36,18 +21,11 @@ class QuicksellApp extends StatefulWidget {
 class _QuicksellAppState extends State<QuicksellApp> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "Quicksell App",
-      home: FutureBuilder<Widget>(
-        future: init(),
-        builder: (context, snapshot) => snapshot.hasData
-            ? snapshot.data!
-            : Center(child: CircularProgressIndicator()),
-      ),
-      routes: {
-        '/feed': (_) => Feed(),
-        '/chats': (_) => Chats(),
-      },
+    return FutureBuilder<Widget>(
+      future: init(),
+      builder: (context, snapshot) => snapshot.hasData
+          ? snapshot.data!
+          : Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -63,37 +41,56 @@ class _QuicksellAppState extends State<QuicksellApp> {
       );
     }
 
-    initMap();
+    var appState = AppState(
+      location: await initMap(),
+      fcmId: await initNotifications(),
+    );
 
-    initNotifications();
+    var api = API();
+    if (!await api.init()) return errorScreen("Connection error");
 
-    var apiStatus = await context.read<API>().init();
-    if (!apiStatus) {
-      return errorScreen("Connection error");
-    }
-
-    return MainWidget();
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AppState>(
+          create: (_) => appState,
+        ),
+        Provider<API>(
+          create: (_) => api,
+          dispose: (_, api) => api.dispose(),
+        ),
+      ],
+      child: MaterialApp(
+        title: "Quicksell App",
+        home: MainWidget(),
+        routes: {
+          '/feed': (_) => Feed(),
+          '/chats': (_) => Chats(),
+        },
+      ),
+    );
   }
 
   Widget errorScreen(String text, {Widget? button}) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              text,
-              style: Theme.of(context).textTheme.headline4,
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 20.0),
-            if (button != null) button,
-            SizedBox(height: 40.0),
-            ElevatedButton(
-              onPressed: () => setState(() {}),
-              child: Text("Reload"),
-            ),
-          ],
+    return MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                text,
+                style: Theme.of(context).textTheme.headline4,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 20.0),
+              if (button != null) button,
+              SizedBox(height: 40.0),
+              ElevatedButton(
+                onPressed: () => setState(() {}),
+                child: Text("Reload"),
+              ),
+            ],
+          ),
         ),
       ),
     );
