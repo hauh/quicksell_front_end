@@ -55,9 +55,15 @@ class Chat {
   String subject;
   Profile interlocutor;
   Listing listing;
-  Message latestMessage;
+  Message? latestMessage;
 
   late List<Message> messages;
+
+  Chat.prepareFromListing(Listing listing)
+      : uuid = "",
+        subject = listing.title,
+        interlocutor = listing.seller,
+        listing = listing;
 
   Chat.fromJson(Map<String, dynamic> json)
       : uuid = json['uuid'],

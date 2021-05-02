@@ -8,21 +8,25 @@ import 'package:quicksell_app/profile.dart' show Profile;
 import 'package:quicksell_app/search.dart' show Search;
 import 'package:quicksell_app/state.dart' show UserState;
 import 'package:quicksell_app/map.dart' show mapInit;
+import 'package:quicksell_app/notifications.dart' show init;
 
-void main() => runApp(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<UserState>(
-            create: (_) => UserState(),
-          ),
-          Provider<API>(
-            create: (_) => API(),
-            dispose: (_, api) => api.dispose(),
-          ),
-        ],
-        child: QuicksellApp(),
-      ),
-    );
+void main() {
+  init();
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<UserState>(
+          create: (_) => UserState(),
+        ),
+        Provider<API>(
+          create: (_) => API(),
+          dispose: (_, api) => api.dispose(),
+        ),
+      ],
+      child: QuicksellApp(),
+    ),
+  );
+}
 
 class QuicksellApp extends StatelessWidget {
   static const String title = 'Quicksell App';

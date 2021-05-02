@@ -13,6 +13,7 @@ class AppState {
 
 class UserState with ChangeNotifier {
   bool _authenticated = false;
+  String? fcm_id;
   User? user;
 
   bool get authenticated => _authenticated;

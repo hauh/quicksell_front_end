@@ -43,3 +43,4 @@ app.*.map.json
 api_url
 plugins/
 secrets.xml
+google-services.json
