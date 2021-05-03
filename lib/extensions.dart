@@ -45,3 +45,38 @@ extension WaitingAlert on BuildContext {
 
   void stopWaiting() => Navigator.of(this).pop();
 }
+
+extension ConfirmationAlert on BuildContext {
+  void confirm({required String message, required Function() action}) {
+    showDialog(
+      context: this,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: Text(
+          message,
+          textAlign: TextAlign.center,
+        ),
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            ElevatedButton(
+              onPressed: Navigator.of(this).pop,
+              child: Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(this).pop();
+                action();
+              },
+              style: ButtonStyle(
+                backgroundColor:
+                    MaterialStateProperty.all<Color>(Colors.orange),
+              ),
+              child: Text("Confirm"),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}

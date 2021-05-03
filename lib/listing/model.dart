@@ -17,6 +17,7 @@ class Listing with ChangeNotifier {
   bool conditionNew;
   String? characteristics;
   List<dynamic> photos;
+  bool closed;
 
   Listing.fromJson(Map<String, dynamic> json)
       : uuid = json['uuid'],
@@ -34,7 +35,8 @@ class Listing with ChangeNotifier {
         conditionNew = json['condition_new'],
         characteristics = null, // json['characteristics'],
         seller = Profile.fromJson(json['seller']),
-        photos = json['photos'];
+        photos = json['photos'],
+        closed = false;
 
   void updateWithForm(ListingFormData formData) {
     title = formData.title!;
@@ -43,6 +45,11 @@ class Listing with ChangeNotifier {
     category = formData.category!;
     conditionNew = formData.conditionNew!;
 
+    notifyListeners();
+  }
+
+  void delete() {
+    closed = true;
     notifyListeners();
   }
 }

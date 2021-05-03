@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:quicksell_app/api.dart' show API;
+import 'package:quicksell_app/extensions.dart';
 import 'package:quicksell_app/listing/lib.dart' show Listing, ListingCard;
 import 'package:quicksell_app/map.dart';
 
@@ -47,14 +47,17 @@ class _FeedState extends State<FeedBuilder> {
     return PagedListView<int, Listing>(
       pagingController: pagingController,
       builderDelegate: PagedChildBuilderDelegate<Listing>(
-        itemBuilder: (_, item, __) => ListingCard(item),
+        itemBuilder: (_, listing, __) {
+          listing.addListener(() => pagingController.refresh());
+          return ListingCard(listing);
+        },
       ),
     );
   }
 
   Future<void> fetchPage(int pageKey) async {
     try {
-      final newItems = await API().getListings(pageKey);
+      final newItems = await context.api.getListings(pageKey);
       newItems.length >= 10
           ? pagingController.appendPage(newItems, pageKey + 1)
           : pagingController.appendLastPage(newItems);

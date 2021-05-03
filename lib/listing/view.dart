@@ -25,7 +25,7 @@ class _CardState extends State<ListingCard> {
         leading: Icon(Icons.no_photography),
         title: Text(listing.title),
         subtitle: Text(listing.category),
-        trailing: Text(AppState.currencyFormat(listing.price)),
+        trailing: Text(context.appState.currency(listing.price)),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => _ListingView(listing)),
         ),
@@ -171,7 +171,7 @@ class _Price extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      AppState.currencyFormat(price),
+      context.appState.currency(price),
       style: Theme.of(context).textTheme.headline5,
       textAlign: TextAlign.center,
     );
@@ -180,7 +180,6 @@ class _Price extends StatelessWidget {
 
 class _Contact extends StatelessWidget {
   final Listing listing;
-
   _Contact(this.listing);
 
   @override
@@ -218,14 +217,34 @@ class _Edit extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment.center,
-      child: ElevatedButton(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => EditListing.update(listing)),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        ElevatedButton(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => EditListing.update(listing)),
+          ),
+          child: Text('Edit'),
         ),
-        child: Text('Edit'),
-      ),
+        ElevatedButton(
+          onPressed: () => context.confirm(
+            message: "Are you sure you want to delete this listing?",
+            action: () {
+              context.waiting("Deleting...");
+              context.api
+                  .deleteListing(listing.uuid)
+                  .whenComplete(() => context.stopWaiting())
+                  .then(
+                (_) {
+                  listing.delete();
+                  Navigator.of(context).pop();
+                },
+              ).catchError((error) => context.notify(error.toString()));
+            },
+          ),
+          child: Text('Delete'),
+        ),
+      ],
     );
   }
 }
@@ -265,8 +284,8 @@ class _Details extends StatelessWidget {
         Text("Category: ${listing.category}"),
         Text("Condition: ${listing.conditionNew ? "new" : "used"}"),
         Text("Details: ${listing.characteristics}"),
-        Text("Date created: ${AppState.datetimeFormat(listing.dateCreated)}"),
-        Text("Date expires: ${AppState.datetimeFormat(listing.dateExpires)}"),
+        Text("Date created: ${context.appState.datetime(listing.dateCreated)}"),
+        Text("Date expires: ${context.appState.datetime(listing.dateExpires)}"),
       ],
     );
   }

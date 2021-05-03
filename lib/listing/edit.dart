@@ -35,11 +35,11 @@ class _Create extends StatelessWidget {
   Widget build(BuildContext _) {
     return Provider(
       create: (_) => ListingFormData(),
-      child: Consumer2<API, ListingFormData>(
-        builder: (context, api, formData, _) => _Form(
+      child: Consumer<ListingFormData>(
+        builder: (context, formData, _) => _Form(
           onSubmit: () {
             context.waiting("Creating listing...");
-            api
+            context.api
                 .createListing(formData)
                 .whenComplete(() => context.stopWaiting())
                 .then(
@@ -66,11 +66,11 @@ class _Update extends StatelessWidget {
   Widget build(BuildContext _) {
     return Provider(
       create: (_) => ListingFormData.fromListing(listing),
-      child: Consumer2<API, ListingFormData>(
-        builder: (context, api, formData, _) => _Form(
+      child: Consumer<ListingFormData>(
+        builder: (context, formData, _) => _Form(
           onSubmit: () {
             context.waiting("Updating listing...");
-            api
+            context.api
                 .updateListing(formData)
                 .whenComplete(() => context.stopWaiting())
                 .then(

@@ -5,6 +5,15 @@ import 'package:http/http.dart' as http;
 import 'package:quicksell_app/listing/lib.dart' show Listing, ListingFormData;
 import 'package:quicksell_app/models.dart';
 
+class APIException implements Exception {
+  String message;
+  http.Response response;
+  APIException(this.message, this.response);
+
+  @override
+  String toString() => "$message: ${response.statusCode}\n${response.body}";
+}
+
 class API extends http.BaseClient {
   API._();
   static final _instance = API._();
@@ -33,7 +42,6 @@ class API extends http.BaseClient {
     final response = await get(apiUri.resolve('info/'));
     if (response.statusCode != 200) return false;
     _categories = _decode(response)['categories'];
-
     return true;
   }
 
@@ -42,14 +50,16 @@ class API extends http.BaseClient {
       apiUri.resolve('users/login/'),
       body: jsonEncode({'username': email, 'password': password}),
     );
-    if (response.statusCode != 200) throw Exception("Authorization failed.");
+    if (response.statusCode != 200)
+      throw APIException("Authorization failed", response);
     _headers['Authorization'] = "Token ${_decode(response)['token']}";
   }
 
   Future<User> authenticate(String email, String password) async {
     await authorize(email, password);
     final response = await get(apiUri.resolve('users/'));
-    if (response.statusCode != 200) throw Exception("Authentication failed.");
+    if (response.statusCode != 200)
+      throw APIException("Authentication failed", response);
     return User.fromJson(_decode(response));
   }
 
@@ -65,13 +75,15 @@ class API extends http.BaseClient {
       }),
     );
     if (response.statusCode != 201)
-      throw Exception("Registration failed:\n" + response.body);
+      throw APIException("Registration failed", response);
     await authorize(email, password);
     return User.fromJson(_decode(response));
   }
 
   Future<void> logOut() async {
-    await delete(apiUri.resolve('users/login/'));
+    final response = await delete(apiUri.resolve('users/login/'));
+    if (response.statusCode != 200)
+      throw APIException("Logout failed", response);
     _headers.remove('Authorization');
   }
 
@@ -83,9 +95,8 @@ class API extends http.BaseClient {
       apiUri.resolve('listings/').replace(queryParameters: queryParams),
     );
     if (response.statusCode != 200) {
-      if (response.statusCode != 404)
-        throw Exception("Failed to get listings.");
-      return [];
+      if (response.statusCode == 404) return [];
+      throw APIException("Failed to get listings", response);
     }
     List<dynamic> listings = _decode(response)['results'];
     return listings.map((data) => Listing.fromJson(data)).toList();
@@ -97,7 +108,7 @@ class API extends http.BaseClient {
       body: formData.toJson(),
     );
     if (response.statusCode != 201)
-      throw Exception("Failed to create listing: \n" + response.body);
+      throw APIException("Failed to create listing", response);
     return Listing.fromJson(_decode(response));
   }
 
@@ -107,8 +118,15 @@ class API extends http.BaseClient {
       body: formData.toJson(),
     );
     if (response.statusCode != 200)
-      throw Exception("Failed to update listing: \n" + response.body);
+      throw APIException("Failed to update listing", response);
     return ListingFormData.fromJson(_decode(response));
+  }
+
+  Future<void> deleteListing(String uuid) async {
+    final response = await delete(apiUri.resolve('listings/$uuid/'));
+    if (response.statusCode != 204) {
+      throw APIException("Failed to delete listing", response);
+    }
   }
 
   Future<List<Chat>> getChats(int page, [Map<String, String>? filters]) async {
@@ -118,10 +136,9 @@ class API extends http.BaseClient {
       apiUri.resolve('chats/').replace(queryParameters: queryParams),
     );
     if (response.statusCode != 200) {
-      if (response.statusCode != 404) throw Exception("Failed to get chats!");
-      return <Chat>[];
+      if (response.statusCode == 404) return <Chat>[];
+      throw APIException("Failed to get chats", response);
     }
-
     List<dynamic> chats = _decode(response)['results'];
     return (chats.map((data) => Chat.fromJson(data)).toList());
   }
@@ -134,9 +151,8 @@ class API extends http.BaseClient {
       apiUri.resolve('chats/$uuid/').replace(queryParameters: queryParams),
     );
     if (response.statusCode != 200) {
-      if (response.statusCode != 404)
-        throw Exception("Failed to get messages!");
-      return <Message>[];
+      if (response.statusCode == 404) return <Message>[];
+      throw APIException("Failed to get messages", response);
     }
     List<dynamic> messages = _decode(response)['results'];
     return (messages.map((data) => Message.fromJson(data)).toList());
@@ -153,7 +169,7 @@ class API extends http.BaseClient {
       }),
     );
     if (response.statusCode != 201)
-      throw Exception("Failed to create message: \n" + response.body);
+      throw APIException("Failed to create message", response);
     return Chat.fromJson(_decode(response));
   }
 
@@ -162,8 +178,8 @@ class API extends http.BaseClient {
       apiUri.resolve('chats/$uuid/'),
       body: jsonEncode({"text": text}),
     );
-    if (response.statusCode != 201)
-      throw Exception("Failed to create message: \n" + response.body);
+    if (response.statusCode == 201)
+      throw APIException("Failed to create message", response);
     return Message.fromJson(_decode(response));
   }
 
