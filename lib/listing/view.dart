@@ -75,7 +75,7 @@ class _ListingViewState extends State<_ListingView> {
                 ? _Edit(listing)
                 : _Contact(listing),
             Divider(color: Colors.black),
-            _Location(listing.location),
+            _Location(Location(latitude: 37.385746, longitude: -122.074534, address: "California")),
             Divider(color: Colors.black),
             _Description(listing.description),
             Divider(color: Colors.black),
@@ -259,7 +259,7 @@ class _Description extends StatelessWidget {
 }
 
 class _Location extends StatelessWidget {
-  final int? location;
+  final Location? location;
   _Location(this.location);
 
   @override
@@ -267,7 +267,7 @@ class _Location extends StatelessWidget {
     return ListTile(
       leading: Icon(Icons.pin_drop, size: 40),
       title: Text("City, metro station."),
-      subtitle: Text("Distance from you."),
+      subtitle: Text("Distance from you: " + context.navigation.distanceBetween(location!)),
     );
   }
 }

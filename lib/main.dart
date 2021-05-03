@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:quicksell_app/api.dart' show API;
 import 'package:quicksell_app/chat/lib.dart' show Chats;
@@ -10,6 +9,7 @@ import 'package:quicksell_app/notifications.dart' show initNotifications;
 import 'package:quicksell_app/profile.dart' show Profile;
 import 'package:quicksell_app/search.dart' show Search;
 import 'package:quicksell_app/state.dart' show AppState;
+import 'package:quicksell_app/navigation/lib.dart' show Navigation;
 
 void main() => runApp(QuicksellApp());
 
@@ -30,16 +30,9 @@ class _QuicksellAppState extends State<QuicksellApp> {
   }
 
   Future<Widget> init() async {
-    var locationPermission = await Permission.location.request();
-    if (!locationPermission.isGranted) {
-      return errorScreen(
-        "Location access required",
-        button: ElevatedButton(
-          onPressed: openAppSettings,
-          child: Text("Open settings"),
-        ),
-      );
-    }
+    var navigation = Navigation();
+
+    await navigation.updateCoordinates();
 
     var appState = AppState(
       location: await initMap(),
@@ -53,6 +46,9 @@ class _QuicksellAppState extends State<QuicksellApp> {
       providers: [
         ChangeNotifierProvider<AppState>(
           create: (_) => appState,
+        ),
+        ChangeNotifierProvider<Navigation>(
+          create: (_) => navigation,
         ),
         Provider<API>(
           create: (_) => api,
