@@ -18,7 +18,7 @@ class _ChatRoomBodyState extends State<ChatRoomBody> {
   void initState() {
     super.initState();
     pagingController.addPageRequestListener((pageKey) => fetchPage(pageKey));
-    notificationQueue.addListener(refresh);
+    context.appState.notificationQueue.addListener(refresh);
     controller = TextEditingController();
     chat = widget.chat;
   }
@@ -28,7 +28,7 @@ class _ChatRoomBodyState extends State<ChatRoomBody> {
   void sendMessage() {
     if (controller.text.isNotEmpty) {
       if (chat.uuid.isEmpty) {
-        API()
+        context.api
             .createChat(
           chat.interlocutor.uuid,
           chat.listing.uuid,
@@ -40,7 +40,9 @@ class _ChatRoomBodyState extends State<ChatRoomBody> {
           refresh();
         });
       } else {
-        API().createMessage(chat.uuid, controller.text).then((_) => refresh());
+        context.api
+            .createMessage(chat.uuid, controller.text)
+            .then((_) => refresh());
         pagingController.refresh();
       }
       controller.clear();
@@ -49,7 +51,7 @@ class _ChatRoomBodyState extends State<ChatRoomBody> {
 
   Future<void> fetchPage(int pageKey) async {
     try {
-      final newItems = await API().getMessages(chat.uuid, pageKey);
+      final newItems = await context.api.getMessages(chat.uuid, pageKey);
       if (newItems.length >= 10) {
         pagingController.appendPage(newItems, pageKey + 1);
       } else {
@@ -65,21 +67,19 @@ class _ChatRoomBodyState extends State<ChatRoomBody> {
     return Column(
       children: [
         Expanded(
-          child: chat.uuid.isEmpty
-              ? Center(
-                  child: Text(
-                    "No messages here yet",
-                    style: TextStyle(fontSize: 23, color: Colors.grey),
-                  ),
-                )
-              : PagedListView(
-                  reverse: true,
-                  pagingController: pagingController,
-                  builderDelegate: PagedChildBuilderDelegate<Message>(
-                    itemBuilder: (_, item, __) => MessageTile(item)
-                  ),
-                )
-        ),
+            child: chat.uuid.isEmpty
+                ? Center(
+                    child: Text(
+                      "No messages here yet",
+                      style: TextStyle(fontSize: 23, color: Colors.grey),
+                    ),
+                  )
+                : PagedListView(
+                    reverse: true,
+                    pagingController: pagingController,
+                    builderDelegate: PagedChildBuilderDelegate<Message>(
+                        itemBuilder: (_, item, __) => MessageTile(item)),
+                  )),
         SizedBox(height: 10),
         ChatRoomBottomBar(
           onPressed: sendMessage,

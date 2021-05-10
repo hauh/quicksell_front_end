@@ -13,7 +13,7 @@ class Listing with ChangeNotifier {
   int sold;
   int views;
   DateTime dateExpires;
-  int? location;
+  Location location;
   bool conditionNew;
   String? characteristics;
   List<dynamic> photos;
@@ -31,7 +31,7 @@ class Listing with ChangeNotifier {
         views = json['views'],
         dateCreated = DateTime.parse(json['date_created']),
         dateExpires = DateTime.parse(json['date_expires']),
-        location = json['location'],
+        location = Location.fromJson(json['location']),
         conditionNew = json['condition_new'],
         characteristics = null, // json['characteristics'],
         seller = Profile.fromJson(json['seller']),
@@ -61,6 +61,7 @@ class ListingFormData {
   String? category;
   int? price;
   bool? conditionNew;
+  Location? location;
 
   ListingFormData();
 
@@ -70,7 +71,8 @@ class ListingFormData {
         description = listing.description,
         category = listing.category,
         price = listing.price,
-        conditionNew = listing.conditionNew;
+        conditionNew = listing.conditionNew,
+        location = listing.location;
 
   ListingFormData.fromJson(Map<String, dynamic> json)
       : uuid = json['uuid'],
@@ -78,7 +80,8 @@ class ListingFormData {
         description = json['description'],
         price = json['price'],
         category = json['category'],
-        conditionNew = json['condition_new'];
+        conditionNew = json['condition_new'],
+        location = Location.fromJson(json['location']);
 
   String toJson() => jsonEncode({
         'title': title,
@@ -86,6 +89,7 @@ class ListingFormData {
         'category': category,
         'price': price,
         'condition_new': conditionNew,
+        'location': location!.toDict(),
       });
 
   void clear() {

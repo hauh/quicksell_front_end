@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:quicksell_app/extensions.dart';
 import 'package:quicksell_app/listing/lib.dart' show Listing, ListingCard;
-import 'package:quicksell_app/map.dart';
+import 'package:quicksell_app/navigation/lib.dart' show MapView;
 
 class Feed extends StatelessWidget {
   @override

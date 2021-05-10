@@ -1,16 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:here_sdk/core.dart';
-import 'package:here_sdk/gestures.dart';
-import 'package:here_sdk/mapview.dart';
-import 'package:here_sdk/search.dart';
-import 'package:quicksell_app/extensions.dart';
-
-Future<GeoCoordinates> initMap() async {
-  SdkContext.init(IsolateOrigin.main);
-  var currentPosition = await Geolocator.getCurrentPosition();
-  return GeoCoordinates(currentPosition.latitude, currentPosition.longitude);
-}
+part of navigation;
 
 class MapView extends StatefulWidget {
   @override
@@ -21,13 +9,11 @@ class _MapViewState extends State<MapView> {
   late ValueNotifier<String> addressNotifier;
   late SearchEngine searchEngine;
   late HereMapController mapController;
-  late GeoCoordinates currentCoordinates;
 
   @override
   void initState() {
     addressNotifier = ValueNotifier("Set your address");
     searchEngine = SearchEngine();
-    currentCoordinates = context.appState.location;
     super.initState();
   }
 
@@ -40,29 +26,8 @@ class _MapViewState extends State<MapView> {
           builder: (context, address, _) => Text(address),
         ),
       ),
-      body: FutureBuilder<GeoCoordinates>(
-        future: _determinePosition(),
-        builder: (context, snapshot) => !snapshot.hasData
-            ? Center(child: CircularProgressIndicator())
-            : HereMap(onMapCreated: onMapCreated),
-      ),
+      body: HereMap(onMapCreated: onMapCreated),
     );
-  }
-
-  Future<GeoCoordinates> _determinePosition() async {
-    if (await Geolocator.isLocationServiceEnabled()) {
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied)
-        permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.always ||
-          permission == LocationPermission.whileInUse) {
-        var currentPosition = await Geolocator.getCurrentPosition();
-
-        currentCoordinates =
-            GeoCoordinates(currentPosition.latitude, currentPosition.longitude);
-      }
-    }
-    return currentCoordinates;
   }
 
   String addressString(Place place) {
@@ -70,6 +35,8 @@ class _MapViewState extends State<MapView> {
   }
 
   void onMapCreated(HereMapController controller) {
+    var curLocation = context.geo.location;
+    var geo = GeoCoordinates(curLocation.latitude, curLocation.longitude);
     mapController = controller;
     controller.mapScene.loadSceneForMapScheme(
       MapScheme.normalDay,
@@ -77,7 +44,7 @@ class _MapViewState extends State<MapView> {
         if (error != null)
           context.notify(error.toString());
         else {
-          controller.camera.lookAtPointWithDistance(currentCoordinates, 8000);
+          controller.camera.lookAtPointWithDistance(geo, 8000);
           controller.gestures.disableDefaultAction(GestureType.doubleTap);
           controller.gestures.doubleTapListener = DoubleTapListener.fromLambdas(
             lambda_onDoubleTap: (point) => searchEngine.searchByCoordinates(

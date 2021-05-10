@@ -104,6 +104,7 @@ class _Form extends StatelessWidget {
           _DescriptionField(),
           _ConditionField(),
           _CategoryField(),
+          _LocationField(),
           SizedBox(height: 40.0),
           ElevatedButton(
             onPressed: () {
@@ -359,6 +360,90 @@ class _CategoryTreeState extends State<_CategoryTree> {
                       ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LocationField extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _LocationFieldState();
+}
+
+class _LocationFieldState extends State<_LocationField> with _ErrorMessage {
+  Location? selectedLocation;
+
+  @override
+  Widget build(BuildContext _) {
+    return Consumer<ListingFormData>(
+      builder: (context, formData, _) => FormField<Location>(
+        validator: (location) => location == null ? "Required" : null,
+        onSaved: (location) => formData.location = location,
+        builder: (state) => ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(Icons.pin_drop),
+          title: Column(children: [
+            RadioListTile<Location>(
+              title: Text("Current location"),
+              subtitle: Text(context.geo.location.address),
+              value: context.geo.location,
+              groupValue: formData.location,
+              contentPadding: EdgeInsets.only(left: 0),
+              onChanged: (location) {
+                formData.location = location;
+                state.didChange(location);
+                FocusScope.of(context).unfocus();
+              },
+              secondary: IconButton(
+                icon: Icon(Icons.refresh),
+                onPressed: updateLocation,
+              ),
+            ),
+            RadioListTile<Location?>(
+              title: Text("Select another location"),
+              subtitle: selectedLocation != null
+                  ? Text(selectedLocation!.address)
+                  : null,
+              value: selectedLocation,
+              groupValue: formData.location ?? Location(0, 0, ""), // no select
+              toggleable: true,
+              contentPadding: EdgeInsets.only(left: 0),
+              onChanged: (_) => showMap().then((location) {
+                formData.location = location;
+                state.didChange(location);
+                FocusScope.of(context).unfocus();
+                setState(() => selectedLocation = location);
+              }),
+            ),
+          ]),
+          subtitle: showError(state),
+        ),
+      ),
+    );
+  }
+
+  void updateLocation() {
+    context.waiting("Updating location...");
+    context.geo
+        .updateLocation()
+        .then((_) => setState(() {}))
+        .whenComplete(() => context.stopWaiting());
+  }
+
+  Future<Location> showMap() async {
+    // TODO: map view
+    return await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: Text("Map Screen")),
+          body: Center(
+            child: ElevatedButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(Location(1, 2, "TEST LOCATION")),
+              child: Text("Select location"),
+            ),
+          ),
         ),
       ),
     );

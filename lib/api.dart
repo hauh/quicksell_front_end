@@ -2,8 +2,9 @@ import 'dart:convert' show json, jsonEncode, utf8;
 
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
+import 'package:quicksell_app/chat/lib.dart' show Chat, Message;
 import 'package:quicksell_app/listing/lib.dart' show Listing, ListingFormData;
-import 'package:quicksell_app/models.dart';
+import 'package:quicksell_app/profile/lib.dart' show User;
 
 class APIException implements Exception {
   String message;
@@ -37,12 +38,12 @@ class API extends http.BaseClient {
   Map<String, dynamic> _decode(http.Response response) =>
       json.decode(utf8.decode(response.bodyBytes));
 
-  Future<bool> init() async {
+  Future<void> init() async {
     apiUri = Uri.parse(await rootBundle.loadString('assets/api_url'));
     final response = await get(apiUri.resolve('info/'));
-    if (response.statusCode != 200) return false;
+    if (response.statusCode != 200)
+      throw APIException("API connection failed", response);
     _categories = _decode(response)['categories'];
-    return true;
   }
 
   Future<void> authorize(String email, String password) async {

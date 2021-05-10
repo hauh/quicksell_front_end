@@ -12,15 +12,17 @@ class _ChatListBodyState extends State<ChatListBody> {
   void initState() {
     super.initState();
     pagingController.addPageRequestListener((pageKey) => fetchPage(pageKey));
-    notificationQueue.addListener(refresh);
+    context.appState.notificationQueue.addListener(refresh);
   }
 
-  void refresh() => mounted ? { setState(() {}), pagingController.refresh() }: null;
+  void refresh() =>
+      mounted ? {setState(() {}), pagingController.refresh()} : null;
 
   Future<void> fetchPage(int pageKey) async {
     try {
-      final newItems = await API().getChats(pageKey);
-      newItems.sort((a, b) => b.latestMessage!.timestamp.compareTo(a.latestMessage!.timestamp));
+      final newItems = await context.api.getChats(pageKey);
+      newItems.sort((a, b) =>
+          b.latestMessage!.timestamp.compareTo(a.latestMessage!.timestamp));
       if (newItems.length >= 10) {
         pagingController.appendPage(newItems, pageKey + 1);
       } else {
@@ -38,9 +40,8 @@ class _ChatListBodyState extends State<ChatListBody> {
       // reverse: true,
       pagingController: pagingController,
       builderDelegate: PagedChildBuilderDelegate<Chat>(
-        firstPageProgressIndicatorBuilder: (context) => Center(),
-        itemBuilder: (_, item, __) => ChatTile(item)
-      ),
+          firstPageProgressIndicatorBuilder: (context) => Center(),
+          itemBuilder: (_, item, __) => ChatTile(item)),
     );
   }
 
@@ -75,7 +76,7 @@ class ChatTile extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(chat.listing.title),
-            Text(AppState.currencyFormat(chat.listing.price)),
+            Text(context.appState.currency(chat.listing.price)),
           ],
         ),
         onTap: () => Navigator.of(context).push(

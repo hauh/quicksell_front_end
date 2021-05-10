@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:quicksell_app/api.dart' show API;
+import 'package:quicksell_app/navigation/lib.dart' show Geo;
 import 'package:quicksell_app/state.dart' show AppState;
-import 'package:quicksell_app/navigation/lib.dart' show Navigation;
 
 extension Getters on BuildContext {
   API get api => read<API>();
   AppState get appState => read<AppState>();
-  Navigation get navigation => read<Navigation>();
+  Geo get geo => read<Geo>();
 }
 
 extension NotificationSnackBar on BuildContext {

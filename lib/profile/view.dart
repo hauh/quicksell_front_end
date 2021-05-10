@@ -1,9 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:quicksell_app/authorization.dart' show AuthenticationRequired;
-import 'package:quicksell_app/feed.dart' show FeedBuilder;
-import 'package:quicksell_app/extensions.dart';
+part of profile;
 
-class Profile extends StatelessWidget {
+class ProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AuthenticationRequired(
@@ -38,7 +35,7 @@ class Profile extends StatelessWidget {
           ),
           body: TabBarView(
             children: [
-              _ProfileView(),
+              _ProfileMain(),
               FeedBuilder(
                 filters: {'seller': context.appState.user?.profile.uuid},
               ),
@@ -52,7 +49,7 @@ class Profile extends StatelessWidget {
   }
 }
 
-class _ProfileView extends StatelessWidget {
+class _ProfileMain extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var profile = context.appState.user!.profile;
