@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:quicksell_app/extensions.dart';
 import 'package:quicksell_app/listing/lib.dart' show Listing, ListingCard;
-import 'package:quicksell_app/navigation/lib.dart' show MapView;
+import 'package:quicksell_app/navigation/lib.dart';
 
 class Feed extends StatelessWidget {
   @override
@@ -14,14 +14,21 @@ class Feed extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.map),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => MapView()),
-            ),
+            onPressed: () => _showMap(context),
           ),
         ],
       ),
       body: FeedBuilder(),
     );
+  }
+
+  void _showMap(BuildContext context) async {
+    final result = await Navigator.push(
+      context, MaterialPageRoute(
+        builder: (context) => context.geo.getMap(context)
+      )
+    );
+    print("$result");
   }
 }
 

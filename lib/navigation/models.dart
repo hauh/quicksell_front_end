@@ -18,6 +18,19 @@ class Location {
       };
 
   @override
+  String toString() => "lat: $latitude, lng: $longitude, addr: $address";
+
+  @override
   bool operator ==(Object rhs) =>
       rhs is Location && rhs.latitude == latitude && rhs.longitude == longitude;
+}
+
+class SimpleMarker {
+  double width;
+  double height;
+  Widget widget;
+
+  final Location point;
+
+  SimpleMarker(this.point, this.widget, {this.width = 50.0, this.height = 50.0});
 }

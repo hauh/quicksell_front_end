@@ -3,12 +3,9 @@ library navigation;
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:here_sdk/core.dart';
-import 'package:here_sdk/gestures.dart';
-import 'package:here_sdk/mapview.dart';
-import 'package:here_sdk/search.dart';
 import 'package:quicksell_app/extensions.dart';
+import 'package:flutter_map/flutter_map.dart';
+import "package:latlong/latlong.dart";
 
 part 'geo.dart';
-part 'map.dart';
 part 'models.dart';

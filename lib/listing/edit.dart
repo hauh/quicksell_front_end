@@ -432,18 +432,20 @@ class _LocationFieldState extends State<_LocationField> with _ErrorMessage {
   }
 
   Future<Location> showMap() async {
-    // TODO: map view
+    var markers = <SimpleMarker>[
+      SimpleMarker(context.geo.location, Container(child: FlutterLogo()))
+    ];
     return await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => Scaffold(
-          appBar: AppBar(title: Text("Map Screen")),
-          body: Center(
-            child: ElevatedButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(Location(1, 2, "TEST LOCATION")),
-              child: Text("Select location"),
-            ),
+          appBar: AppBar(
+            title: Text("Map Screen"),
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, size: 30,),
+              onPressed: () => Navigator.pop(context),
+            )
           ),
+          body: context.geo.getMap(context, markers: markers)
         ),
       ),
     );

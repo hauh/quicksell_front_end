@@ -33,7 +33,6 @@ class _QuicksellAppState extends State<QuicksellApp> {
     var geo = Geo();
 
     try {
-      await geo.init();
       await appState.initNotifications();
       await api.init();
     } on Exception {

@@ -266,7 +266,28 @@ class _Location extends StatelessWidget {
   Widget build(BuildContext context) {
     var distanceTo = context.geo.distanceTo(location);
     return ListTile(
-      leading: Icon(Icons.pin_drop, size: 40),
+      leading: IconButton(
+        icon: Icon(Icons.pin_drop),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                leading: IconButton(
+                  icon: Icon(Icons.arrow_back, size: 30,),
+                  onPressed: () => Navigator.pop(context)
+                ),
+                title: Text(location.address),
+              ),
+              body: context.geo.getMap(
+                context,
+                markers: [SimpleMarker(location, Container(child: FlutterLogo()))],
+                focus: location
+              )
+            )
+          )
+        )
+      ),
       title: Text(location.address),
       subtitle: Text("Distance from you: " +
           (distanceTo > 1000
