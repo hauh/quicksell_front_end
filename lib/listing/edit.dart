@@ -409,7 +409,7 @@ class _LocationFieldState extends State<_LocationField> with _ErrorMessage {
               groupValue: formData.location ?? Location(0, 0, ""), // no select
               toggleable: true,
               contentPadding: EdgeInsets.only(left: 0),
-              onChanged: (_) => showMap().then((location) {
+              onChanged: (_) => context.geo.showMap(context).then((location) {
                 formData.location = location;
                 state.didChange(location);
                 FocusScope.of(context).unfocus();
@@ -429,25 +429,5 @@ class _LocationFieldState extends State<_LocationField> with _ErrorMessage {
         .updateLocation()
         .then((_) => setState(() {}))
         .whenComplete(() => context.stopWaiting());
-  }
-
-  Future<Location> showMap() async {
-    var markers = <SimpleMarker>[
-      SimpleMarker(context.geo.location, Container(child: FlutterLogo()))
-    ];
-    return await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => Scaffold(
-          appBar: AppBar(
-            title: Text("Map Screen"),
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, size: 30,),
-              onPressed: () => Navigator.pop(context),
-            )
-          ),
-          body: context.geo.getMap(context, markers: markers)
-        ),
-      ),
-    );
   }
 }

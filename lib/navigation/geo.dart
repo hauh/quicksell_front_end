@@ -5,7 +5,6 @@ class Geo with ChangeNotifier {
   static const defaultZoom = 13.0;
 
   late Location location = defaultLocation;
-  late Location lastTappedLocation = defaultLocation;
 
   double distanceTo(Location dst) {
     return Geolocator.distanceBetween(
@@ -34,55 +33,104 @@ class Geo with ChangeNotifier {
         position.longitude,
         "${address.locality}, ${address.street}, ${address.thoroughfare}",
       );
-    } else {
-      location = defaultLocation;
-      return false;
+      notifyListeners();
+      return true;
     }
-    notifyListeners();
-    return true;
+    return false;
   }
 
-  Widget getMap(BuildContext context, {List<SimpleMarker> markers = const [], Location? focus}) {
-    return FutureBuilder(
-      future: updateLocation(),
-      builder: (context, snapshot) => snapshot.hasData ? FlutterMap(
+  Future<dynamic> showMap(
+    BuildContext context, {
+    List<Location> points = const [],
+    Location? focus,
+  }) {
+    var markers = points.map((point) => SimpleMarker(point)).toList();
+    return Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FutureBuilder(
+          future: updateLocation(),
+          builder: (context, snapshot) => snapshot.hasData
+              ? MapView(focus ?? location, markers)
+              : Scaffold(
+                  appBar: AppBar(title: Text("Loading map...")),
+                  body: Center(child: CircularProgressIndicator()),
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class SimpleMarker extends Marker {
+  SimpleMarker(
+    location, {
+    width = 70.0,
+    height = 70.0,
+    widget = const Icon(Icons.pin_drop, color: Colors.purple),
+  }) : super(
+          width: width,
+          height: height,
+          point: LatLng(location.latitude, location.longitude),
+          builder: (_) => widget,
+        );
+}
+
+class MapView extends StatefulWidget {
+  final Location location;
+  final List<SimpleMarker> markers;
+  MapView(this.location, this.markers);
+
+  @override
+  State<StatefulWidget> createState() => MapViewState();
+}
+
+class MapViewState extends State<MapView> {
+  late Location location;
+
+  @override
+  void initState() {
+    location = widget.location;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () => Navigator.of(context).pop(location),
+          ),
+          title: Text(location.address)),
+      body: FlutterMap(
         options: MapOptions(
-          zoom: defaultZoom,
-          center: focus == null ? LatLng(location.latitude, location.longitude) : LatLng(focus.latitude, focus.longitude),
+          zoom: Geo.defaultZoom,
+          center: LatLng(widget.location.latitude, widget.location.longitude),
           onTap: (LatLng point) async {
-            await _onMapTap(context, point);
+            await onMapTap(context, point);
           },
         ),
         layers: [
           TileLayerOptions(
             urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            subdomains: ['a', 'b', 'c']
+            subdomains: ['a', 'b', 'c'],
           ),
-          MarkerLayerOptions(
-            markers: List<Marker>.generate(
-              markers.length,
-              (index) => Marker(
-                width: markers[index].width,
-                height: markers[index].height,
-                point: LatLng(markers[index].point.latitude, markers[index].point.longitude),
-                builder: (cxt) => markers[index].widget
-              )
-            ),
-          ),
+          MarkerLayerOptions(markers: [SimpleMarker(location)]),
+          MarkerLayerOptions(markers: widget.markers),
         ],
-      ) : Container(child: Center(child: CircularProgressIndicator()))
+      ),
     );
   }
 
-  Future<void> _onMapTap(BuildContext context, LatLng point) async {
-    var fetchedAddresses = await placemarkFromCoordinates(
-      point.latitude, point.longitude
-    );
+  Future<void> onMapTap(BuildContext context, LatLng point) async {
+    var fetchedAddresses =
+        await placemarkFromCoordinates(point.latitude, point.longitude);
     var address = fetchedAddresses.first;
-    lastTappedLocation = Location(
+    var newLocation = Location(
       point.latitude,
       point.longitude,
-      "${address.locality}, ${address.street}, ${address.thoroughfare}"
+      "${address.locality}, ${address.street}, ${address.thoroughfare}",
     );
+    setState(() => location = newLocation);
   }
 }

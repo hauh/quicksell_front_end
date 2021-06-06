@@ -258,41 +258,44 @@ class _Description extends StatelessWidget {
       Text(description.isEmpty ? "Lorem ipsum." : description);
 }
 
-class _Location extends StatelessWidget {
+class _Location extends StatefulWidget {
   final Location location;
   _Location(this.location);
 
   @override
+  State<StatefulWidget> createState() => _LocationState();
+}
+
+class _LocationState extends State<_Location> {
+  @override
   Widget build(BuildContext context) {
-    var distanceTo = context.geo.distanceTo(location);
+    var distanceTo = context.geo.distanceTo(widget.location);
     return ListTile(
       leading: IconButton(
         icon: Icon(Icons.pin_drop),
-        onPressed: () => Navigator.push(
+        onPressed: () => context.geo.showMap(
           context,
-          MaterialPageRoute(
-            builder: (_) => Scaffold(
-              appBar: AppBar(
-                leading: IconButton(
-                  icon: Icon(Icons.arrow_back, size: 30,),
-                  onPressed: () => Navigator.pop(context)
-                ),
-                title: Text(location.address),
-              ),
-              body: context.geo.getMap(
-                context,
-                markers: [SimpleMarker(location, Container(child: FlutterLogo()))],
-                focus: location
-              )
-            )
-          )
-        )
+          focus: widget.location,
+          points: [widget.location],
+        ),
       ),
-      title: Text(location.address),
-      subtitle: Text("Distance from you: " +
-          (distanceTo > 1000
-              ? "${(distanceTo / 1000).toStringAsFixed(1)} KM"
-              : "${distanceTo.round().toString()} M")),
+      title: Text(widget.location.address),
+      subtitle: Text(
+        "Distance from you: " +
+            (distanceTo > 1000
+                ? "${(distanceTo / 1000).toStringAsFixed(1)} KM"
+                : "${distanceTo.round().toString()} M"),
+      ),
+      trailing: IconButton(
+        icon: Icon(Icons.refresh),
+        onPressed: () {
+          context.waiting("Updating location...");
+          context.geo
+              .updateLocation()
+              .then((_) => setState(() {}))
+              .whenComplete(() => context.stopWaiting());
+        },
+      ),
     );
   }
 }
