@@ -31,7 +31,7 @@ class FeedBuilder extends StatefulWidget {
 }
 
 class _FeedState extends State<FeedBuilder> {
-  final pagingController = PagingController<int, Listing>(firstPageKey: 1);
+  final pagingController = PagingController<int, Listing>(firstPageKey: 0);
 
   @override
   void initState() {

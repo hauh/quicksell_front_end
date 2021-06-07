@@ -29,7 +29,7 @@ class _ChatRoomTopBarInterlocutorState
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Text(widget._interlocutor.fullName, textAlign: TextAlign.start),
+              Text(widget._interlocutor.name, textAlign: TextAlign.start),
               Text(widget._interlocutor.online ? "Online" : "Offline"),
             ],
           ),

@@ -2,23 +2,23 @@ part of profile;
 
 class Profile {
   final String uuid;
-  final DateTime dateCreated;
-  final String fullName;
+  final String name;
+  final String phone;
   final String about;
+  final DateTime registrationDate;
   final bool online;
   final int rating;
   final String? avatar;
-  final Location location;
 
   Profile.fromJson(Map<String, dynamic> json)
       : uuid = json['uuid'],
-        dateCreated = DateTime.parse(json['date_created']),
-        fullName = json['full_name'],
+        name = json['name'],
+        phone = json['phone'],
         about = json['about'],
+        registrationDate = DateTime.parse(json['ts_spawn']),
         online = json['online'],
         rating = json['rating'],
-        avatar = json['avatar'],
-        location = Location.fromJson(json['location']);
+        avatar = json['avatar'];
 
   @override
   bool operator ==(Object rhs) => rhs is Profile && rhs.uuid == uuid;

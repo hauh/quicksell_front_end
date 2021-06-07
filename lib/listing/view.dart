@@ -190,7 +190,7 @@ class _Contact extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             ElevatedButton(
-              onPressed: () => launch("tel: 123456789"),
+              onPressed: () => launch("tel: ${listing.seller.phone}"),
               child: Text('Call'),
             ),
             ElevatedButton(
@@ -344,7 +344,7 @@ class _Seller extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(Icons.person, size: 40),
-      title: Text(seller.fullName),
+      title: Text(seller.name),
       subtitle: Text("Rating: ${seller.rating}"),
     );
   }

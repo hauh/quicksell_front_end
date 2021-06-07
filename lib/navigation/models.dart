@@ -8,12 +8,13 @@ class Location {
   const Location(this.latitude, this.longitude, this.address);
 
   Location.fromJson(Map<String, dynamic> json)
-      : latitude = double.parse(json['coordinates'].split(',')[0]),
-        longitude = double.parse(json['coordinates'].split(',')[1]),
+      : latitude = json['latitude'],
+        longitude = json['longitude'],
         address = json['address'];
 
   Map<String, dynamic> toDict() => {
-        'coordinates': "$latitude, $longitude",
+        'latitude': latitude,
+        'longitude': longitude,
         'address': address,
       };
 

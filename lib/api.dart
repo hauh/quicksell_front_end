@@ -1,79 +1,131 @@
 import 'dart:convert' show json, jsonEncode, utf8;
 
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:http/http.dart' as http;
+import 'package:http/http.dart' show Response, Client;
 import 'package:quicksell_app/chat/lib.dart' show Chat, Message;
 import 'package:quicksell_app/listing/lib.dart' show Listing, ListingFormData;
 import 'package:quicksell_app/profile/lib.dart' show User;
 
 class APIException implements Exception {
   String message;
-  http.Response response;
+  Response response;
   APIException(this.message, this.response);
 
   @override
   String toString() => "$message: ${response.statusCode}\n${response.body}";
 }
 
-class API extends http.BaseClient {
+class API {
   API._();
   static final _instance = API._();
   factory API() => API._instance;
 
-  final _client = http.Client();
-  final Map<String, String> _headers = {
-    'Content-Type': 'application/json; charset=utf-8',
-  };
+  final Client _client = Client();
 
   late Uri apiUri;
+  late String accessToken;
+
   late Map<String, dynamic> _categories;
   Map<String, dynamic> get categories => _categories;
 
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) {
-    request.headers.addAll(_headers);
-    return _client.send(request).timeout(Duration(seconds: 30));
+  Future<Response> get(
+    String endpoint, {
+    Map<String, dynamic>? params,
+    bool authorization = false,
+  }) async {
+    return await _client.get(
+      apiUri.resolve(endpoint).replace(queryParameters: params),
+      headers: authorization ? {'Authorization': "Bearer $accessToken"} : null,
+    );
   }
 
-  Map<String, dynamic> _decode(http.Response response) =>
+  Future<Response> post(
+    String endpoint, {
+    required dynamic body,
+    required bool authorization,
+  }) async {
+    var encoded = jsonEncode(body);
+    return await _client.post(
+      apiUri.resolve(endpoint),
+      body: encoded,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Lenght': encoded.length.toString(),
+        if (authorization) 'Authorization': "Bearer $accessToken"
+      },
+    );
+  }
+
+  Future<Response> patch(
+    String endpoint, {
+    required Map<String, dynamic> body,
+    required bool authorization,
+  }) async {
+    var encoded = jsonEncode(body);
+    return await _client.patch(
+      apiUri.resolve(endpoint),
+      body: encoded,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Lenght': encoded.length.toString(),
+        if (authorization) 'Authorization': "Bearer $accessToken"
+      },
+    );
+  }
+
+  Future<Response> delete(String endpoint) async {
+    return await _client.delete(
+      apiUri.resolve(endpoint),
+      headers: {'Authorization': "Bearer $accessToken"},
+    );
+  }
+
+  dynamic _decode(Response response) =>
       json.decode(utf8.decode(response.bodyBytes));
 
   Future<void> init() async {
     apiUri = Uri.parse(await rootBundle.loadString('assets/api_url'));
-    final response = await get(apiUri.resolve('info/'));
+    final response = await get('listings/categories/');
     if (response.statusCode != 200)
       throw APIException("API connection failed", response);
-    _categories = _decode(response)['categories'];
+    _categories = _decode(response);
   }
 
   Future<void> authorize(String email, String password) async {
-    final response = await post(
-      apiUri.resolve('users/login/'),
-      body: jsonEncode({'username': email, 'password': password}),
+    final response = await _client.post(
+      apiUri.resolve('users/auth/'),
+      body: {'username': email, 'password': password},
     );
     if (response.statusCode != 200)
       throw APIException("Authorization failed", response);
-    _headers['Authorization'] = "Token ${_decode(response)['token']}";
+    accessToken = _decode(response)['access_token'];
   }
 
   Future<User> authenticate(String email, String password) async {
     await authorize(email, password);
-    final response = await get(apiUri.resolve('users/'));
+    final response = await get('users/', authorization: true);
     if (response.statusCode != 200)
       throw APIException("Authentication failed", response);
     return User.fromJson(_decode(response));
   }
 
   Future<User> createAccount(
-      String email, String password, String fcmId) async {
+    String name,
+    String email,
+    String phone,
+    String password,
+    String fcmId,
+  ) async {
     final response = await post(
-      apiUri.resolve('users/'),
-      body: jsonEncode({
+      'users/',
+      body: {
+        'name': name,
         'email': email,
+        'phone': phone,
         'password': password,
         'fcm_id': fcmId,
-        'full_name': "Bill Gates"
-      }),
+      },
+      authorization: false,
     );
     if (response.statusCode != 201)
       throw APIException("Registration failed", response);
@@ -82,31 +134,30 @@ class API extends http.BaseClient {
   }
 
   Future<void> logOut() async {
-    final response = await delete(apiUri.resolve('users/login/'));
+    final response = await delete('users/auth/');
     if (response.statusCode != 200)
       throw APIException("Logout failed", response);
-    _headers.remove('Authorization');
+    accessToken = '';
   }
 
-  Future<List<Listing>> getListings(int page,
-      [Map<String, String>? filters]) async {
-    var queryParams = {'page': page.toString()};
-    if (filters != null) queryParams.addAll(filters);
-    final response = await get(
-      apiUri.resolve('listings/').replace(queryParameters: queryParams),
-    );
-    if (response.statusCode != 200) {
-      if (response.statusCode == 404) return [];
+  Future<List<Listing>> getListings(
+    int page, [
+    Map<String, String>? filters,
+  ]) async {
+    var params = {'page': page.toString()};
+    if (filters != null) params.addAll(filters);
+    final response = await get('listings/', params: params);
+    if (response.statusCode != 200)
       throw APIException("Failed to get listings", response);
-    }
-    List<dynamic> listings = _decode(response)['results'];
+    List<dynamic> listings = _decode(response);
     return listings.map((data) => Listing.fromJson(data)).toList();
   }
 
   Future<Listing> createListing(ListingFormData formData) async {
     final response = await post(
-      apiUri.resolve('listings/'),
-      body: formData.toJson(),
+      'listings/',
+      body: formData.toDict(),
+      authorization: true,
     );
     if (response.statusCode != 201)
       throw APIException("Failed to create listing", response);
@@ -115,8 +166,9 @@ class API extends http.BaseClient {
 
   Future<ListingFormData> updateListing(ListingFormData formData) async {
     final response = await patch(
-      apiUri.resolve('listings/${formData.uuid}/'),
-      body: formData.toJson(),
+      'listings/${formData.uuid}/',
+      body: formData.toDict(),
+      authorization: true,
     );
     if (response.statusCode != 200)
       throw APIException("Failed to update listing", response);
@@ -124,60 +176,64 @@ class API extends http.BaseClient {
   }
 
   Future<void> deleteListing(String uuid) async {
-    final response = await delete(apiUri.resolve('listings/$uuid/'));
+    final response = await delete('listings/$uuid/');
     if (response.statusCode != 204) {
       throw APIException("Failed to delete listing", response);
     }
   }
 
   Future<List<Chat>> getChats(int page, [Map<String, String>? filters]) async {
-    var queryParams = {'page': page.toString()};
-    if (filters != null) queryParams.addAll(filters);
+    var params = {'page': page.toString()};
+    if (filters != null) params.addAll(filters);
     final response = await get(
-      apiUri.resolve('chats/').replace(queryParameters: queryParams),
+      'chats/',
+      params: params,
+      authorization: true,
     );
     if (response.statusCode != 200) {
       if (response.statusCode == 404) return <Chat>[];
       throw APIException("Failed to get chats", response);
     }
-    List<dynamic> chats = _decode(response)['results'];
+    List<dynamic> chats = _decode(response);
     return (chats.map((data) => Chat.fromJson(data)).toList());
   }
 
-  Future<List<Message>> getMessages(String uuid, int page,
-      [Map<String, String>? filters]) async {
-    var queryParams = {'page': page.toString()};
-    if (filters != null) queryParams.addAll(filters);
-    final response = await get(
-      apiUri.resolve('chats/$uuid/').replace(queryParameters: queryParams),
-    );
-    if (response.statusCode != 200) {
-      if (response.statusCode == 404) return <Message>[];
-      throw APIException("Failed to get messages", response);
-    }
-    List<dynamic> messages = _decode(response)['results'];
-    return (messages.map((data) => Message.fromJson(data)).toList());
-  }
-
   Future<Chat> createChat(
-      String to_uuid, String listing_uuid, String text) async {
+      String to_uuid, String listingUuid, String text) async {
     final response = await post(
-      apiUri.resolve('chats/'),
-      body: jsonEncode({
-        "to_uuid": to_uuid,
-        "listing_uuid": listing_uuid,
-        "text": text,
-      }),
+      'chats/',
+      body: listingUuid,
+      authorization: true,
     );
     if (response.statusCode != 201)
       throw APIException("Failed to create message", response);
     return Chat.fromJson(_decode(response));
   }
 
+  Future<List<Message>> getMessages(
+    String uuid,
+    int page, [
+    Map<String, String>? filters,
+  ]) async {
+    var params = {'page': page.toString()};
+    if (filters != null) params.addAll(filters);
+    final response = await get(
+      'chats/$uuid/',
+      params: params,
+      authorization: true,
+    );
+    if (response.statusCode != 200) {
+      throw APIException("Failed to get messages", response);
+    }
+    List<dynamic> messages = _decode(response)['results'];
+    return (messages.map((data) => Message.fromJson(data)).toList());
+  }
+
   Future<Message> createMessage(String uuid, String text) async {
     final response = await post(
-      apiUri.resolve('chats/$uuid/'),
-      body: jsonEncode({"text": text}),
+      'chats/$uuid/',
+      body: {"text": text},
+      authorization: true,
     );
     if (response.statusCode == 201)
       throw APIException("Failed to create message", response);

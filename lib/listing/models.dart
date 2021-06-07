@@ -16,7 +16,7 @@ class Listing with ChangeNotifier {
   Location location;
   bool conditionNew;
   String? characteristics;
-  List<dynamic> photos;
+  List<dynamic>? photos;
   bool closed;
 
   Listing.fromJson(Map<String, dynamic> json)
@@ -29,13 +29,13 @@ class Listing with ChangeNotifier {
         quantity = json['quantity'],
         sold = json['sold'],
         views = json['views'],
-        dateCreated = DateTime.parse(json['date_created']),
-        dateExpires = DateTime.parse(json['date_expires']),
+        dateCreated = DateTime.parse(json['ts_spawn']),
+        dateExpires = DateTime.parse(json['ts_expires']),
         location = Location.fromJson(json['location']),
-        conditionNew = json['condition_new'],
-        characteristics = null, // json['characteristics'],
+        conditionNew = json['is_new'],
+        characteristics = json['properties'],
+        photos = null,
         seller = Profile.fromJson(json['seller']),
-        photos = json['photos'],
         closed = false;
 
   void updateWithForm(ListingFormData formData) {
@@ -83,14 +83,14 @@ class ListingFormData {
         conditionNew = json['condition_new'],
         location = Location.fromJson(json['location']);
 
-  String toJson() => jsonEncode({
-        'title': title,
-        'description': description,
-        'category': category,
-        'price': price,
-        'condition_new': conditionNew,
-        'location': location!.toDict(),
-      });
+  Map<String, dynamic> toDict() => {
+        if (title != null) 'title': title,
+        if (description != null) 'description': description,
+        if (category != null) 'category': category,
+        if (price != null) 'price': price,
+        if (conditionNew != null) 'is_new': conditionNew,
+        if (location != null) 'location': location!.toDict(),
+      };
 
   void clear() {
     uuid = null;

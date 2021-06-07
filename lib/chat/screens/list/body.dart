@@ -67,7 +67,7 @@ class ChatTile extends StatelessWidget {
           maxRadius: 30,
         ),
         title: Text(
-          chat.interlocutor.fullName,
+          chat.interlocutor.name,
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
         ),
         subtitle:

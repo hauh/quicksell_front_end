@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:provider/provider.dart';
 import 'package:quicksell_app/extensions.dart';
@@ -119,7 +120,7 @@ class _SignInState extends State<_SignInView> {
           .then(
         (user) {
           context.appState.logIn(user);
-          context.notify("Welcome back, ${user.profile.fullName}!");
+          context.notify("Welcome back, ${user.profile.name}!");
           Navigator.of(context).pop();
         },
       ).catchError((err) => context.notify(err.toString()));
@@ -144,6 +145,7 @@ class _SignUpState extends State<_SignUpView> {
   final formKey = GlobalKey<FormState>();
   final nameController = TextEditingController();
   final emailController = TextEditingController();
+  final phoneController = TextEditingController();
   final passwordController = TextEditingController();
 
   @override
@@ -155,6 +157,7 @@ class _SignUpState extends State<_SignUpView> {
         children: [
           _NameField(nameController),
           _EmailField(emailController),
+          _PhoneField(phoneController),
           _SignUpPasswordField(passwordController),
           _ConfirmPasswordField(passwordController),
           Divider(height: 40),
@@ -173,15 +176,17 @@ class _SignUpState extends State<_SignUpView> {
       context.waiting("Creating account...");
       context.api
           .createAccount(
+            nameController.text,
             emailController.text,
+            phoneController.text,
             passwordController.text,
             context.appState.fcmId!,
           )
           .whenComplete(() => context.stopWaiting())
           .then(
-        (userModel) {
-          context.appState.logIn(userModel);
-          context.notify("Welcome, ${userModel.profile.fullName}!");
+        (user) {
+          context.appState.logIn(user);
+          context.notify("Welcome, ${user.profile.name}!");
           Navigator.of(context).pop();
         },
       ).catchError((err) => context.notify(err.toString()));
@@ -218,6 +223,50 @@ class _EmailField extends StatelessWidget {
   }
 }
 
+class _NameField extends StatelessWidget {
+  final TextEditingController controller;
+  _NameField(this.controller);
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      decoration: InputDecoration(
+        icon: Icon(Icons.person),
+        labelText: "Name",
+        hintText: "How people should call you?",
+      ),
+      controller: controller,
+      keyboardType: TextInputType.name,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onEditingComplete: () => FocusScope.of(context).nextFocus(),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp("[a-zA-Z ЁёА-я]"))
+      ],
+    );
+  }
+}
+
+class _PhoneField extends StatelessWidget {
+  final TextEditingController controller;
+  _PhoneField(this.controller);
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      decoration: InputDecoration(
+        icon: Icon(Icons.phone),
+        labelText: "Phone",
+        hintText: "Your contact phone number",
+      ),
+      controller: controller,
+      keyboardType: TextInputType.phone,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onEditingComplete: () => FocusScope.of(context).nextFocus(),
+    );
+  }
+}
+
 class _SignInPasswordField extends StatelessWidget {
   final TextEditingController controller;
 
@@ -233,28 +282,6 @@ class _SignInPasswordField extends StatelessWidget {
       controller: controller,
       keyboardType: TextInputType.visiblePassword,
       obscureText: true,
-      onEditingComplete: () => FocusScope.of(context).nextFocus(),
-    );
-  }
-}
-
-class _NameField extends StatelessWidget {
-  final TextEditingController controller;
-  _NameField(this.controller);
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      decoration: InputDecoration(
-        icon: Icon(Icons.person),
-        labelText: "Name",
-        hintText: "How people should call you?",
-      ),
-      controller: controller,
-      keyboardType: TextInputType.name,
-      validator: (value) =>
-          value == null || value.isEmpty ? "Enter something" : null,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
       onEditingComplete: () => FocusScope.of(context).nextFocus(),
     );
   }

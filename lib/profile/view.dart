@@ -80,11 +80,11 @@ class _ProfileMain extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(profile.fullName),
+                      Text(profile.name),
                       Text("Rating: ${profile.rating}"),
                       Text(
                         "Registration date: "
-                        "${context.appState.datetime(profile.dateCreated)}",
+                        "${context.appState.datetime(profile.registrationDate)}",
                       ),
                     ],
                   ),
