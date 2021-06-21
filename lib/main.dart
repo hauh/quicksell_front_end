@@ -9,6 +9,7 @@ import 'package:quicksell_app/notifications.dart' show Notifications;
 import 'package:quicksell_app/profile/lib.dart' show ProfileView;
 import 'package:quicksell_app/search.dart' show Search;
 import 'package:quicksell_app/state.dart' show AppState;
+import 'package:quicksell_app/theme.dart' show theme;
 
 void main() => runApp(QuicksellApp());
 
@@ -59,6 +60,7 @@ class _QuicksellAppState extends State<QuicksellApp> {
       ],
       child: MaterialApp(
         title: "Quicksell App",
+        theme: theme,
         home: MainWidget(),
         routes: {
           '/feed': (_) => Feed(),
@@ -142,9 +144,6 @@ class _CurrentPage extends State<MainWidget> {
         ],
         currentIndex: _selectedIndex,
         onTap: (int index) => setState(() => _selectedIndex = index),
-        backgroundColor: Theme.of(context).accentColor,
-        selectedItemColor: Colors.amber[600],
-        unselectedItemColor: Colors.white,
       ),
     );
   }
