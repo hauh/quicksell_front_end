@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:quicksell_app/api.dart' show API;
 import 'package:quicksell_app/navigation/lib.dart' show Geo;
+import 'package:quicksell_app/notifications.dart' show Notifications;
 import 'package:quicksell_app/state.dart' show AppState;
 
 extension Getters on BuildContext {
   API get api => read<API>();
   AppState get appState => read<AppState>();
   Geo get geo => read<Geo>();
+  Notifications get notifications => read<Notifications>();
 }
 
 extension NotificationSnackBar on BuildContext {
-  Null notify(String message) {
+  void notify(String message) {
     ScaffoldMessenger.of(this).showSnackBar(
       SnackBar(
         content: Text(message),

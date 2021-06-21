@@ -6,28 +6,46 @@ class ChatListBody extends StatefulWidget {
 }
 
 class _ChatListBodyState extends State<ChatListBody> {
-  final pagingController = PagingController<int, Chat>(firstPageKey: 1);
+  final Map<String, Chat> loadedChats = {};
+  final pagingController = PagingController<int, Chat>(firstPageKey: 0);
+  late final messagesSubscription;
 
   @override
   void initState() {
-    super.initState();
+    messagesSubscription = context.notifications.subscribeToMessages(refresh);
     pagingController.addPageRequestListener((pageKey) => fetchPage(pageKey));
-    context.appState.notificationQueue.addListener(refresh);
+    super.initState();
   }
 
-  void refresh() =>
-      mounted ? {setState(() {}), pagingController.refresh()} : null;
+  void refresh(String chatUuid, Message newMessage) {
+    print(chatUuid);
+    print(newMessage.text);
+    loadedChats[chatUuid] != null
+        ? loadedChats[chatUuid]!.updateLastMessage(newMessage)
+        : pagingController.refresh();
+  }
+
+  void rearrange() {
+    pagingController.value = PagingState(
+      itemList: List.from(
+        pagingController.itemList!
+          ..sort((a, b) => b.updateTimestamp.compareTo(a.updateTimestamp)),
+      ),
+      error: null,
+      nextPageKey: pagingController.nextPageKey,
+    );
+  }
 
   Future<void> fetchPage(int pageKey) async {
     try {
       final newItems = await context.api.getChats(pageKey);
-      newItems.sort((a, b) =>
-          b.latestMessage!.timestamp.compareTo(a.latestMessage!.timestamp));
-      if (newItems.length >= 10) {
-        pagingController.appendPage(newItems, pageKey + 1);
-      } else {
-        pagingController.appendLastPage(newItems);
-      }
+      newItems.forEach(
+        (chat) => loadedChats[chat.uuid] = chat..addListener(rearrange),
+      );
+      if (mounted)
+        newItems.isNotEmpty
+            ? pagingController.appendPage(newItems, pageKey + 1)
+            : pagingController.appendLastPage([]);
     } catch (error) {
       pagingController.error = error;
     }
@@ -40,22 +58,34 @@ class _ChatListBodyState extends State<ChatListBody> {
       // reverse: true,
       pagingController: pagingController,
       builderDelegate: PagedChildBuilderDelegate<Chat>(
-          firstPageProgressIndicatorBuilder: (context) => Center(),
-          itemBuilder: (_, item, __) => ChatTile(item)),
+        firstPageProgressIndicatorBuilder: (_) => Center(),
+        itemBuilder: (_, chat, __) => ChatTile(chat),
+      ),
     );
   }
 
   @override
   void dispose() {
+    messagesSubscription.cancel();
     pagingController.dispose();
     super.dispose();
   }
 }
 
-class ChatTile extends StatelessWidget {
+class ChatTile extends StatefulWidget {
   final Chat chat;
-
   ChatTile(this.chat);
+
+  @override
+  State<StatefulWidget> createState() => ChatTileState();
+}
+
+class ChatTileState extends State<ChatTile> {
+  @override
+  void initState() {
+    widget.chat.addListener(() => setState(() {}));
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,20 +97,27 @@ class ChatTile extends StatelessWidget {
           maxRadius: 30,
         ),
         title: Text(
-          chat.interlocutor.name,
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          widget.chat.members
+              .firstWhere(
+                (profile) => profile != context.appState.user!.profile,
+                orElse: () => context.appState.user!.profile,
+              )
+              .name,
         ),
-        subtitle:
-            Text(chat.latestMessage!.text, style: TextStyle(fontSize: 16)),
+        subtitle: Text(
+          widget.chat.lastMessage != null
+              ? widget.chat.lastMessage!.text
+              : "No messages here yet",
+          style: TextStyle(fontSize: 16),
+        ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(chat.listing.title),
-            Text(context.appState.currency(chat.listing.price)),
-          ],
+          children: [Text(widget.chat.subject)],
         ),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => ChatRoom(chat)),
+          MaterialPageRoute(
+            builder: (_) => ChatRoom(widget.chat),
+          ),
         ),
       ),
     );

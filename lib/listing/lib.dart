@@ -1,7 +1,5 @@
 library listing;
 
-import 'dart:convert' show jsonEncode;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import 'package:provider/provider.dart';

@@ -55,10 +55,10 @@ class _FeedState extends State<FeedBuilder> {
   Future<void> fetchPage(int pageKey) async {
     try {
       final newItems = await context.api.getListings(pageKey);
-      newItems.length >= 10
-          ? pagingController.appendPage(newItems, pageKey + 1)
-          : pagingController.appendLastPage(newItems);
-      // TODO: fix exception when pagingController is already disposed
+      if (mounted)
+        newItems.isNotEmpty
+            ? pagingController.appendPage(newItems, pageKey + 1)
+            : pagingController.appendLastPage(newItems);
     } catch (error) {
       pagingController.error = error;
     }

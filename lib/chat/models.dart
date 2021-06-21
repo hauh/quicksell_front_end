@@ -1,37 +1,39 @@
 part of chat;
 
 class Message {
-  bool read;
-  bool is_yours;
+  Profile author;
   String text;
   DateTime timestamp;
 
   Message.fromJson(Map<String, dynamic> json)
-      : read = json['read'],
-        is_yours = json['is_yours'],
+      : author = Profile.fromJson(json['author']),
         text = json['text'],
-        timestamp = DateTime.parse(json['timestamp']);
+        timestamp = DateTime.parse(json['ts_spawn']);
 }
 
-class Chat {
+class Chat with ChangeNotifier {
   String uuid;
   String subject;
-  Profile interlocutor;
-  Listing listing;
-  Message? latestMessage;
-
-  late List<Message> messages;
-
-  Chat.prepareFromListing(Listing listing)
-      : uuid = "",
-        subject = listing.title,
-        interlocutor = listing.seller,
-        listing = listing;
+  DateTime updateTimestamp;
+  List<Profile> members;
+  Message? lastMessage;
 
   Chat.fromJson(Map<String, dynamic> json)
       : uuid = json['uuid'],
         subject = json['subject'],
-        interlocutor = Profile.fromJson(json['interlocutor']),
-        listing = Listing.fromJson(json['listing']),
-        latestMessage = Message.fromJson(json['latest_message']);
+        updateTimestamp = DateTime.parse(json['ts_update']),
+        lastMessage = json['last_message'] != null
+            ? Message.fromJson(json['last_message'])
+            : null,
+        members = json['members']
+            .map<Profile>((memberJson) => Profile.fromJson(memberJson))
+            .toList();
+
+  void updateLastMessage(Message newMessage) {
+    if (newMessage.timestamp.isAfter(updateTimestamp)) {
+      lastMessage = newMessage;
+      updateTimestamp = newMessage.timestamp;
+      notifyListeners();
+    }
+  }
 }

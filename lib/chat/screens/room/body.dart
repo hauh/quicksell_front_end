@@ -10,53 +10,49 @@ class ChatRoomBody extends StatefulWidget {
 }
 
 class _ChatRoomBodyState extends State<ChatRoomBody> {
-  final pagingController = PagingController<int, Message>(firstPageKey: 1);
+  final pagingController = PagingController<int, Message>(firstPageKey: 0);
   late TextEditingController controller;
-  late Chat chat;
+  final ValueNotifier<bool> sendingMessage = ValueNotifier(false);
 
   @override
   void initState() {
-    super.initState();
     pagingController.addPageRequestListener((pageKey) => fetchPage(pageKey));
-    context.appState.notificationQueue.addListener(refresh);
+    widget.chat.addListener(newMessage);
     controller = TextEditingController();
-    chat = widget.chat;
+    super.initState();
   }
 
-  void refresh() => mounted ? setState(() {}) : null;
+  void newMessage() {
+    pagingController.value = PagingState(
+      itemList: [widget.chat.lastMessage!, ...pagingController.itemList ?? []],
+      nextPageKey: pagingController.nextPageKey,
+      error: null,
+    );
+  }
 
-  void sendMessage() {
-    if (controller.text.isNotEmpty) {
-      if (chat.uuid.isEmpty) {
-        context.api
-            .createChat(
-          chat.interlocutor.uuid,
-          chat.listing.uuid,
-          controller.text,
-        )
-            .then((newChat) {
-          chat.uuid = newChat.uuid;
-          chat.latestMessage = newChat.latestMessage;
-          refresh();
-        });
-      } else {
-        context.api
-            .createMessage(chat.uuid, controller.text)
-            .then((_) => refresh());
-        pagingController.refresh();
+  void sendMessage() async {
+    var text = controller.text.trim();
+    if (text.isNotEmpty) {
+      sendingMessage.value = true;
+      try {
+        widget.chat.updateLastMessage(
+          await context.api.createMessage(widget.chat.uuid, text),
+        );
+      } catch (error) {
+        context.notify(error.toString());
       }
-      controller.clear();
+      sendingMessage.value = false;
     }
+    controller.clear();
   }
 
   Future<void> fetchPage(int pageKey) async {
     try {
-      final newItems = await context.api.getMessages(chat.uuid, pageKey);
-      if (newItems.length >= 10) {
-        pagingController.appendPage(newItems, pageKey + 1);
-      } else {
-        pagingController.appendLastPage(newItems);
-      }
+      final newItems = await context.api.getMessages(widget.chat.uuid, pageKey);
+      if (mounted)
+        newItems.isNotEmpty
+            ? pagingController.appendPage(newItems, pageKey + 1)
+            : pagingController.appendLastPage(newItems);
     } catch (error) {
       pagingController.error = error;
     }
@@ -67,23 +63,19 @@ class _ChatRoomBodyState extends State<ChatRoomBody> {
     return Column(
       children: [
         Expanded(
-            child: chat.uuid.isEmpty
-                ? Center(
-                    child: Text(
-                      "No messages here yet",
-                      style: TextStyle(fontSize: 23, color: Colors.grey),
-                    ),
-                  )
-                : PagedListView(
-                    reverse: true,
-                    pagingController: pagingController,
-                    builderDelegate: PagedChildBuilderDelegate<Message>(
-                        itemBuilder: (_, item, __) => MessageTile(item)),
-                  )),
+          child: PagedListView(
+            reverse: true,
+            pagingController: pagingController,
+            builderDelegate: PagedChildBuilderDelegate<Message>(
+              itemBuilder: (_, item, __) => MessageTile(item),
+            ),
+          ),
+        ),
         SizedBox(height: 10),
         ChatRoomBottomBar(
           onPressed: sendMessage,
           controller: controller,
+          sendingMessage: sendingMessage,
         ),
         SizedBox(height: 10)
       ],
@@ -92,6 +84,7 @@ class _ChatRoomBodyState extends State<ChatRoomBody> {
 
   @override
   void dispose() {
+    widget.chat.removeListener(newMessage);
     pagingController.dispose();
     controller.dispose();
     super.dispose();
@@ -106,7 +99,7 @@ class MessageTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var color, alignment;
-    if (message.is_yours) {
+    if (message.author == context.appState.user!.profile) {
       color = Colors.blue[200];
       alignment = Alignment.topRight;
     } else {
@@ -119,13 +112,22 @@ class MessageTile extends StatelessWidget {
         alignment: alignment,
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(10),
             color: color,
           ),
-          padding: EdgeInsets.all(16),
-          child: Text(
-            message.text,
-            style: TextStyle(fontSize: 15),
+          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+          child: Column(
+            children: [
+              Text(
+                context.appState.datetime(message.timestamp),
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w300),
+              ),
+              SizedBox(height: 5),
+              Text(
+                message.text,
+                style: TextStyle(fontSize: 15),
+              )
+            ],
           ),
         ),
       ),
@@ -136,8 +138,13 @@ class MessageTile extends StatelessWidget {
 class ChatRoomBottomBar extends StatelessWidget {
   final Function() onPressed;
   final TextEditingController controller;
+  final ValueListenable<bool> sendingMessage;
 
-  ChatRoomBottomBar({required this.onPressed, required this.controller});
+  ChatRoomBottomBar({
+    required this.onPressed,
+    required this.controller,
+    required this.sendingMessage,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -148,17 +155,26 @@ class ChatRoomBottomBar extends StatelessWidget {
           child: TextField(
             controller: controller,
             decoration: InputDecoration(
-                hintText: "Write a message...",
-                hintStyle: TextStyle(color: Colors.black54),
-                border: OutlineInputBorder()),
+              hintText: "Write a message...",
+              hintStyle: TextStyle(color: Colors.black54),
+              border: OutlineInputBorder(),
+            ),
           ),
         ),
         SizedBox(width: 15),
-        FloatingActionButton(
-          onPressed: onPressed,
-          backgroundColor: Colors.blue,
-          elevation: 0,
-          child: Icon(Icons.send, color: Colors.white, size: 18),
+        ValueListenableBuilder<bool>(
+          valueListenable: sendingMessage,
+          builder: (_, sendingInProgress, __) => sendingInProgress
+              ? FloatingActionButton(
+                  onPressed: null,
+                  backgroundColor: Colors.blue,
+                  child: CircularProgressIndicator(),
+                )
+              : FloatingActionButton(
+                  onPressed: onPressed,
+                  backgroundColor: Colors.blue,
+                  child: Icon(Icons.send, color: Colors.white, size: 18),
+                ),
         ),
         SizedBox(width: 15),
       ],

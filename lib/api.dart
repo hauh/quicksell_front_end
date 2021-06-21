@@ -198,8 +198,7 @@ class API {
     return (chats.map((data) => Chat.fromJson(data)).toList());
   }
 
-  Future<Chat> createChat(
-      String to_uuid, String listingUuid, String text) async {
+  Future<Chat> createChat(String listingUuid) async {
     final response = await post(
       'chats/',
       body: listingUuid,
@@ -210,32 +209,26 @@ class API {
     return Chat.fromJson(_decode(response));
   }
 
-  Future<List<Message>> getMessages(
-    String uuid,
-    int page, [
-    Map<String, String>? filters,
-  ]) async {
-    var params = {'page': page.toString()};
-    if (filters != null) params.addAll(filters);
+  Future<List<Message>> getMessages(String uuid, int page) async {
     final response = await get(
       'chats/$uuid/',
-      params: params,
+      params: {'page': page.toString()},
       authorization: true,
     );
     if (response.statusCode != 200) {
       throw APIException("Failed to get messages", response);
     }
-    List<dynamic> messages = _decode(response)['results'];
+    List<dynamic> messages = _decode(response);
     return (messages.map((data) => Message.fromJson(data)).toList());
   }
 
   Future<Message> createMessage(String uuid, String text) async {
     final response = await post(
       'chats/$uuid/',
-      body: {"text": text},
+      body: text,
       authorization: true,
     );
-    if (response.statusCode == 201)
+    if (response.statusCode != 201)
       throw APIException("Failed to create message", response);
     return Message.fromJson(_decode(response));
   }

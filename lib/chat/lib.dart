@@ -1,5 +1,6 @@
 library chat;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:quicksell_app/authorization.dart';

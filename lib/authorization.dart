@@ -180,7 +180,7 @@ class _SignUpState extends State<_SignUpView> {
             emailController.text,
             phoneController.text,
             passwordController.text,
-            context.appState.fcmId!,
+            context.notifications.fcmId,
           )
           .whenComplete(() => context.stopWaiting())
           .then(

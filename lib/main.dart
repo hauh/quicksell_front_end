@@ -5,6 +5,7 @@ import 'package:quicksell_app/chat/lib.dart' show Chats;
 import 'package:quicksell_app/feed.dart' show Feed;
 import 'package:quicksell_app/listing/lib.dart' show EditListing;
 import 'package:quicksell_app/navigation/lib.dart' show Geo;
+import 'package:quicksell_app/notifications.dart' show Notifications;
 import 'package:quicksell_app/profile/lib.dart' show ProfileView;
 import 'package:quicksell_app/search.dart' show Search;
 import 'package:quicksell_app/state.dart' show AppState;
@@ -31,10 +32,11 @@ class _QuicksellAppState extends State<QuicksellApp> {
     var api = API();
     var appState = AppState();
     var geo = Geo();
+    var notifications = Notifications();
 
     try {
-      await appState.initNotifications();
       await api.init();
+      await notifications.init();
     } on Exception {
       return errorScreen("Connection error");
     }
@@ -46,6 +48,9 @@ class _QuicksellAppState extends State<QuicksellApp> {
         ),
         ChangeNotifierProvider<Geo>(
           create: (_) => geo,
+        ),
+        ChangeNotifierProvider<Notifications>(
+          create: (_) => notifications,
         ),
         Provider<API>(
           create: (_) => api,

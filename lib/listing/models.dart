@@ -8,7 +8,6 @@ class Listing with ChangeNotifier {
   String description;
   int price;
   String category;
-  int status;
   int quantity;
   int sold;
   int views;
@@ -25,7 +24,6 @@ class Listing with ChangeNotifier {
         description = json['description'] ?? "No description",
         price = json['price'],
         category = json['category'],
-        status = json['status'],
         quantity = json['quantity'],
         sold = json['sold'],
         views = json['views'],

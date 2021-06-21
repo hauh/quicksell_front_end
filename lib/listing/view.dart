@@ -195,11 +195,7 @@ class _Contact extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () => context.appState.authenticated
-                  ? Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ChatRoom.initChat(listing),
-                      ),
-                    )
+                  ? startChat(context)
                   : context.notify("You must sign in first"),
               child: Text('Chat'),
             ),
@@ -208,6 +204,20 @@ class _Contact extends StatelessWidget {
         Text('Online status: ${listing.seller.online}'),
       ],
     );
+  }
+
+  void startChat(BuildContext context) {
+    context.waiting("Creating chat...");
+    context.api
+        .createChat(listing.uuid)
+        .whenComplete(() => context.stopWaiting())
+        .then(
+      (chat) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => ChatRoom(chat)),
+        );
+      },
+    ).catchError((err) => context.notify(err.toString()));
   }
 }
 
