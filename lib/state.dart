@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:quicksell_app/feed.dart' show SearchFilters;
 import 'package:quicksell_app/profile/lib.dart' show User;
 
 class AppState with ChangeNotifier {
@@ -12,6 +13,7 @@ class AppState with ChangeNotifier {
 
   bool authenticated = false;
   User? user;
+  SearchFilters? searchFilters;
 
   AppState();
 

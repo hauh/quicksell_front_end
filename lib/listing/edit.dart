@@ -136,7 +136,7 @@ class _TitleField extends StatelessWidget {
         title: TextFormField(
           decoration: InputDecoration(
             labelText: "Title",
-            hintText: "Name the item you want to sell.",
+            hintText: "Name the item you want to sell",
           ),
           keyboardType: TextInputType.text,
           initialValue: formData.title,
@@ -161,7 +161,7 @@ class _PriceField extends StatelessWidget {
         title: TextFormField(
           decoration: InputDecoration(
             labelText: "Price",
-            hintText: "Enter some digits.",
+            hintText: "Enter some digits",
           ),
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -191,7 +191,7 @@ class _DescriptionField extends StatelessWidget {
         title: TextFormField(
           decoration: InputDecoration(
             labelText: "Description",
-            hintText: "Describe your item.",
+            hintText: "Describe your item",
           ),
           keyboardType: TextInputType.multiline,
           maxLines: null,

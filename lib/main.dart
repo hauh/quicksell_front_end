@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:quicksell_app/api.dart' show API;
 import 'package:quicksell_app/chat/lib.dart' show Chats;
-import 'package:quicksell_app/feed.dart' show Feed;
+import 'package:quicksell_app/home.dart' show Home;
 import 'package:quicksell_app/listing/lib.dart' show EditListing;
 import 'package:quicksell_app/navigation/lib.dart' show Geo;
 import 'package:quicksell_app/notifications.dart' show Notifications;
@@ -63,8 +63,11 @@ class _QuicksellAppState extends State<QuicksellApp> {
         theme: theme,
         home: MainWidget(),
         routes: {
-          '/feed': (_) => Feed(),
+          '/home': (_) => Home(),
+          '/search': (_) => Search(),
           '/chats': (_) => Chats(),
+          '/create': (_) => EditListing.create(),
+          '/profile': (_) => ProfileView(),
         },
       ),
     );
@@ -104,7 +107,7 @@ class MainWidget extends StatefulWidget {
 
 class _CurrentPage extends State<MainWidget> {
   static List<Widget> pages = <Widget>[
-    Feed(),
+    Home(),
     Search(),
     EditListing.create(),
     Chats(),

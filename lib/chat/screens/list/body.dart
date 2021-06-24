@@ -18,8 +18,6 @@ class _ChatListBodyState extends State<ChatListBody> {
   }
 
   void refresh(String chatUuid, Message newMessage) {
-    print(chatUuid);
-    print(newMessage.text);
     loadedChats[chatUuid] != null
         ? loadedChats[chatUuid]!.updateLastMessage(newMessage)
         : pagingController.refresh();
