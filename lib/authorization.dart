@@ -177,7 +177,7 @@ class _SignUpState extends State<_SignUpView> {
           .createAccount(
             nameController.text,
             emailController.text,
-            phoneController.text,
+            "7" + phoneController.text,
             passwordController.text,
             context.notifications.fcmId,
           )
@@ -198,6 +198,30 @@ class _SignUpState extends State<_SignUpView> {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+}
+
+class _NameField extends StatelessWidget {
+  final TextEditingController controller;
+  _NameField(this.controller);
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      decoration: InputDecoration(
+        icon: Icon(Icons.person),
+        labelText: "Name",
+        hintText: "How people should call you?",
+      ),
+      controller: controller,
+      keyboardType: TextInputType.name,
+      validator: _Validators.name,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onEditingComplete: () => FocusScope.of(context).nextFocus(),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp("[a-zA-Z ЁёА-я]"))
+      ],
+    );
   }
 }
 
@@ -222,29 +246,6 @@ class _EmailField extends StatelessWidget {
   }
 }
 
-class _NameField extends StatelessWidget {
-  final TextEditingController controller;
-  _NameField(this.controller);
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      decoration: InputDecoration(
-        icon: Icon(Icons.person),
-        labelText: "Name",
-        hintText: "How people should call you?",
-      ),
-      controller: controller,
-      keyboardType: TextInputType.name,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      onEditingComplete: () => FocusScope.of(context).nextFocus(),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp("[a-zA-Z ЁёА-я]"))
-      ],
-    );
-  }
-}
-
 class _PhoneField extends StatelessWidget {
   final TextEditingController controller;
   _PhoneField(this.controller);
@@ -253,12 +254,14 @@ class _PhoneField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       decoration: InputDecoration(
+        prefixText: "+7 ",
         icon: Icon(Icons.phone),
         labelText: "Phone",
         hintText: "Your contact phone number",
       ),
       controller: controller,
       keyboardType: TextInputType.phone,
+      validator: _Validators.phone,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       autovalidateMode: AutovalidateMode.onUserInteraction,
       onEditingComplete: () => FocusScope.of(context).nextFocus(),
@@ -322,8 +325,8 @@ class _ConfirmPasswordField extends StatelessWidget {
       ),
       keyboardType: TextInputType.visiblePassword,
       obscureText: true,
-      validator: (password) =>
-          password != controller.text ? "Passwords don't match" : null,
+      validator: (input) =>
+          input != controller.text ? "Passwords don't match" : null,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       onEditingComplete: () => FocusScope.of(context).nextFocus(),
     );
@@ -331,6 +334,11 @@ class _ConfirmPasswordField extends StatelessWidget {
 }
 
 class _Validators {
+  static String? name(String? input) {
+    if (input == null || input.length < 5)
+      return "Enter at least five characters";
+  }
+
   static final RegExp _emailRegExp = RegExp(
       r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@"
       r"(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?");
@@ -338,7 +346,11 @@ class _Validators {
   static String? email(String? input) {
     if (input == null || input.isEmpty) return "Email required";
     if (!_emailRegExp.hasMatch(input)) return "Invalid format";
-    return null;
+  }
+
+  static String? phone(String? input) {
+    if (input == null || input.length != 10)
+      return "Phone length must be 10 digits";
   }
 
   static final RegExp _pwdUppercaseRegExp = RegExp(r"(?=.*?[A-Z])");
@@ -358,6 +370,5 @@ class _Validators {
       return "Password must contain at least one digit";
     if (!_pwdSpecialCharRegExp.hasMatch(input))
       return "Password must contain at least one special character";
-    return null;
   }
 }

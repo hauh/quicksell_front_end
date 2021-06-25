@@ -189,7 +189,7 @@ class _Contact extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             ElevatedButton(
-              onPressed: () => launch("tel: ${listing.seller.phone}"),
+              onPressed: () => launch("tel: +${listing.seller.phone}"),
               child: Text('Call'),
             ),
             ElevatedButton(
