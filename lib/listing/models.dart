@@ -36,12 +36,20 @@ class Listing with ChangeNotifier {
         seller = Profile.fromJson(json['seller']),
         closed = false;
 
-  void updateWithForm(ListingFormData formData) {
-    title = formData.title!;
-    description = formData.description!;
-    price = formData.price!;
-    category = formData.category!;
-    conditionNew = formData.conditionNew!;
+  void update(Listing updatedListing) {
+    title = updatedListing.title;
+    description = updatedListing.description;
+    price = updatedListing.price;
+    category = updatedListing.category;
+    quantity = updatedListing.quantity;
+    sold = updatedListing.sold;
+    views = updatedListing.views;
+    dateExpires = updatedListing.dateExpires;
+    location = updatedListing.location;
+    conditionNew = updatedListing.conditionNew;
+    characteristics = updatedListing.characteristics;
+    photos = updatedListing.photos;
+    closed = updatedListing.closed;
 
     notifyListeners();
   }
@@ -81,13 +89,13 @@ class ListingFormData {
         conditionNew = json['condition_new'],
         location = Location.fromJson(json['location']);
 
-  Map<String, dynamic> toDict() => {
+  Map<String, dynamic> toJson() => {
         if (title != null) 'title': title,
         if (description != null) 'description': description,
         if (category != null) 'category': category,
         if (price != null) 'price': price,
         if (conditionNew != null) 'is_new': conditionNew,
-        if (location != null) 'location': location!.toDict(),
+        if (location != null) 'location': location!.toJson(),
       };
 
   void clear() {

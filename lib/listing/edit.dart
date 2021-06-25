@@ -2,27 +2,24 @@ part of listing;
 
 class EditListing extends StatelessWidget {
   final Widget title;
-  final Widget form;
+  final Builder builder;
 
   EditListing.create()
-      : title = const Text('Create Listing'),
-        form = _Create();
+      : title = const Text("Create Listing"),
+        builder = Builder(builder: (_) => _Create());
   EditListing.update(Listing listing)
-      : title = const Text('Update Listing'),
-        form = _Update(listing);
+      : title = const Text("Update Listing"),
+        builder = Builder(builder: (_) => _Update(listing));
 
   @override
   Widget build(BuildContext context) {
     return AuthenticationRequired(
-      child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Scaffold(
-          appBar: AppBar(title: title, centerTitle: true),
-          body: SingleChildScrollView(
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 50.0, horizontal: 25.0),
-              child: form,
-            ),
+      child: Scaffold(
+        appBar: AppBar(title: title, centerTitle: true),
+        body: SingleChildScrollView(
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 50.0, horizontal: 25.0),
+            child: builder.build(context),
           ),
         ),
       ),
@@ -74,9 +71,9 @@ class _Update extends StatelessWidget {
                 .updateListing(formData)
                 .whenComplete(() => context.stopWaiting())
                 .then(
-              (savedFormData) {
-                context.notify("Listing ${savedFormData.title} updated!");
-                listing.updateWithForm(savedFormData);
+              (updatedListing) {
+                listing.update(updatedListing);
+                context.notify("Listing ${listing.title} updated!");
                 Navigator.of(context).pop();
               },
             ).catchError((err) => context.notify(err.toString()));
@@ -97,8 +94,8 @@ class _Form extends StatelessWidget {
     return Form(
       key: formKey,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          SizedBox(height: 40.0),
           _TitleField(),
           _PriceField(),
           _DescriptionField(),
@@ -110,11 +107,8 @@ class _Form extends StatelessWidget {
             onPressed: () {
               FocusScope.of(context).unfocus();
               var formState = formKey.currentState!;
-              if (formState.validate()) {
-                formState.save();
-                onSubmit();
-                formState.reset();
-              }
+              formState.save();
+              formState.validate() ? onSubmit() : formState.reset();
             },
             child: Text('Submit'),
           ),
@@ -253,7 +247,7 @@ class _ConditionField extends StatelessWidget with _ErrorMessage {
 }
 
 class _CategoryField extends StatelessWidget with _ErrorMessage {
-  final String defaultValue = "Choose a category";
+  static const String defaultValue = "Choose a category";
 
   @override
   Widget build(BuildContext _) {
@@ -372,62 +366,31 @@ class _LocationField extends StatefulWidget {
 }
 
 class _LocationFieldState extends State<_LocationField> with _ErrorMessage {
-  Location? selectedLocation;
-
   @override
   Widget build(BuildContext _) {
     return Consumer<ListingFormData>(
       builder: (context, formData, _) => FormField<Location>(
+        initialValue: formData.location,
         validator: (location) => location == null ? "Required" : null,
         onSaved: (location) => formData.location = location,
         builder: (state) => ListTile(
           contentPadding: EdgeInsets.zero,
           leading: Icon(Icons.pin_drop),
-          title: Column(children: [
-            RadioListTile<Location>(
-              title: Text("Current location"),
-              subtitle: Text(context.geo.location.address),
-              value: context.geo.location,
-              groupValue: formData.location,
-              contentPadding: EdgeInsets.only(left: 0),
-              onChanged: (location) {
-                formData.location = location;
-                state.didChange(location);
-                FocusScope.of(context).unfocus();
-              },
-              secondary: IconButton(
-                icon: Icon(Icons.refresh),
-                onPressed: updateLocation,
+          title: Text("Location"),
+          trailing: TextButton(
+            onPressed: () => context.geo
+                .showMap(context, focus: state.value)
+                .then((location) => state.didChange(location)),
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              child: Text(
+                state.value?.address ?? "Open map",
+                textAlign: TextAlign.end,
               ),
             ),
-            RadioListTile<Location?>(
-              title: Text("Select another location"),
-              subtitle: selectedLocation != null
-                  ? Text(selectedLocation!.address)
-                  : null,
-              value: selectedLocation,
-              groupValue: formData.location ?? Location(0, 0, ""), // no select
-              toggleable: true,
-              contentPadding: EdgeInsets.only(left: 0),
-              onChanged: (_) => context.geo.showMap(context).then((location) {
-                formData.location = location;
-                state.didChange(location);
-                FocusScope.of(context).unfocus();
-                setState(() => selectedLocation = location);
-              }),
-            ),
-          ]),
-          subtitle: showError(state),
+          ),
         ),
       ),
     );
-  }
-
-  void updateLocation() {
-    context.waiting("Updating location...");
-    context.geo
-        .updateLocation()
-        .then((_) => setState(() {}))
-        .whenComplete(() => context.stopWaiting());
   }
 }

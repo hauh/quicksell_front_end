@@ -1,10 +1,11 @@
 part of navigation;
 
 class Geo with ChangeNotifier {
-  static const defaultLocation = Location(55.751426, 37.618879, "The Kremlin");
+  static const defaultLocation = Location.undefined();
   static const defaultZoom = 13.0;
+  static const defaultRotation = 1;
 
-  late Location location = defaultLocation;
+  Location location = defaultLocation;
 
   double distanceTo(Location dst) {
     return Geolocator.distanceBetween(
@@ -22,40 +23,40 @@ class Geo with ChangeNotifier {
     return false;
   }
 
-  Future<bool> updateLocation() async {
+  static Future<Location> coordinatesToLocation(double lat, double long) async {
+    var addresses = await placemarkFromCoordinates(lat, long);
+    return Location(lat, long, addresses.first);
+  }
+
+  Future<Location> updateLocation() async {
     if (await checkPermissions()) {
-      var position = await Geolocator.getCurrentPosition();
-      var fetchedAddresses =
-          await placemarkFromCoordinates(position.latitude, position.longitude);
-      var address = fetchedAddresses.first;
-      location = Location(
-        position.latitude,
-        position.longitude,
-        "${address.locality}, ${address.street}, ${address.thoroughfare}",
-      );
+      var pos = await Geolocator.getCurrentPosition();
+      location = await coordinatesToLocation(pos.latitude, pos.longitude);
       notifyListeners();
-      return true;
     }
-    return false;
+    return location;
   }
 
   Future<dynamic> showMap(
     BuildContext context, {
-    List<Location> points = const [],
+    List<Location>? points,
     Location? focus,
   }) {
-    var markers = points.map((point) => SimpleMarker(point)).toList();
+    focus ??= location;
     return Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => FutureBuilder(
-          future: updateLocation(),
-          builder: (context, snapshot) => snapshot.hasData
-              ? MapView(focus ?? location, markers)
-              : Scaffold(
-                  appBar: AppBar(title: Text("Loading map...")),
-                  body: Center(child: CircularProgressIndicator()),
-                ),
-        ),
+        builder: (_) => focus != defaultLocation
+            ? MapView(focus!, points)
+            : FutureBuilder(
+                future: updateLocation(),
+                builder: (context, snapshot) => snapshot.hasData
+                    ? MapView(location, points)
+                    : Scaffold(
+                        appBar:
+                            AppBar(title: Text("Fetching your position...")),
+                        body: Center(child: CircularProgressIndicator()),
+                      ),
+              ),
       ),
     );
   }
@@ -76,20 +77,24 @@ class SimpleMarker extends Marker {
 }
 
 class MapView extends StatefulWidget {
-  final Location location;
-  final List<SimpleMarker> markers;
-  MapView(this.location, this.markers);
+  final Location focus;
+  final List<SimpleMarker>? markers;
+
+  MapView(this.focus, points)
+      : markers =
+            points?.map<SimpleMarker>((point) => SimpleMarker(point)).toList();
 
   @override
   State<StatefulWidget> createState() => MapViewState();
 }
 
 class MapViewState extends State<MapView> {
-  late Location location;
+  final controller = MapController();
+  late Location focus;
 
   @override
   void initState() {
-    location = widget.location;
+    focus = widget.focus;
     super.initState();
   }
 
@@ -97,40 +102,59 @@ class MapViewState extends State<MapView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pop(location),
-          ),
-          title: Text(location.address)),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(focus),
+        ),
+        title: FittedBox(
+          clipBehavior: Clip.antiAlias,
+          child: Text(focus.address),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.navigation_sharp),
+            tooltip: "Go to your position",
+            onPressed: locateUser,
+          )
+        ],
+      ),
       body: FlutterMap(
+        mapController: controller,
         options: MapOptions(
           zoom: Geo.defaultZoom,
-          center: LatLng(widget.location.latitude, widget.location.longitude),
-          onTap: (LatLng point) async {
-            await onMapTap(context, point);
-          },
+          center: LatLng(focus.latitude, focus.longitude),
+          onLongPress: (point) async => focusMap(
+            await Geo.coordinatesToLocation(point.latitude, point.longitude),
+          ),
         ),
         layers: [
           TileLayerOptions(
             urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             subdomains: ['a', 'b', 'c'],
           ),
-          MarkerLayerOptions(markers: [SimpleMarker(location)]),
-          MarkerLayerOptions(markers: widget.markers),
+          MarkerLayerOptions(markers: [SimpleMarker(focus)]),
+          if (widget.markers != null && widget.markers!.isNotEmpty)
+            MarkerLayerOptions(markers: widget.markers!),
         ],
       ),
     );
   }
 
-  Future<void> onMapTap(BuildContext context, LatLng point) async {
-    var fetchedAddresses =
-        await placemarkFromCoordinates(point.latitude, point.longitude);
-    var address = fetchedAddresses.first;
-    var newLocation = Location(
-      point.latitude,
-      point.longitude,
-      "${address.locality}, ${address.street}, ${address.thoroughfare}",
+  void focusMap(Location nextLocation) {
+    setState(() => focus = nextLocation);
+    controller.move(
+      LatLng(nextLocation.latitude, nextLocation.longitude),
+      Geo.defaultZoom,
     );
-    setState(() => location = newLocation);
+    controller.rotate(0.0);
+  }
+
+  void locateUser() {
+    context.waiting("Fetching your position...");
+    context.geo
+        .updateLocation()
+        .then((location) => focusMap(location))
+        .whenComplete(() => context.stopWaiting())
+        .catchError((err) => context.notify(err.toString()));
   }
 }

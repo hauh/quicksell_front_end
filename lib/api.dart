@@ -156,7 +156,7 @@ class API {
   Future<Listing> createListing(ListingFormData formData) async {
     final response = await post(
       'listings/',
-      body: formData.toDict(),
+      body: formData.toJson(),
       authorization: true,
     );
     if (response.statusCode != 201)
@@ -164,15 +164,15 @@ class API {
     return Listing.fromJson(_decode(response));
   }
 
-  Future<ListingFormData> updateListing(ListingFormData formData) async {
+  Future<Listing> updateListing(ListingFormData formData) async {
     final response = await patch(
       'listings/${formData.uuid}/',
-      body: formData.toDict(),
+      body: formData.toJson(),
       authorization: true,
     );
     if (response.statusCode != 200)
       throw APIException("Failed to update listing", response);
-    return ListingFormData.fromJson(_decode(response));
+    return Listing.fromJson(_decode(response));
   }
 
   Future<void> deleteListing(String uuid) async {
