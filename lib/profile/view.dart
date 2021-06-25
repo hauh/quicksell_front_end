@@ -4,7 +4,7 @@ class ProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AuthenticationRequired(
-      child: DefaultTabController(
+      builder: (_) => DefaultTabController(
         length: 4,
         child: Scaffold(
           appBar: AppBar(
@@ -36,9 +36,7 @@ class ProfileView extends StatelessWidget {
           body: TabBarView(
             children: [
               _ProfileMain(),
-              FeedBuilder(
-                filters: {'seller': context.appState.user?.profile.uuid},
-              ),
+              Feed(context.appState.user?.profile.listingsSearchFilters()),
               _Favorites(),
               _Settings(),
             ],

@@ -22,6 +22,10 @@ class Profile {
 
   @override
   bool operator ==(Object rhs) => rhs is Profile && rhs.uuid == uuid;
+
+  SearchFilters listingsSearchFilters() {
+    return SearchFilters.byProfile(this);
+  }
 }
 
 class User {

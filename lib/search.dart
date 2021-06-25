@@ -22,7 +22,7 @@ class SearchState extends State<Search> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.remove_circle_outline_sharp),
+            icon: Icon(Icons.highlight_remove),
             tooltip: "Reset filters",
             onPressed: clearFilters,
           )
@@ -68,6 +68,7 @@ class SearchFiltersView extends StatelessWidget {
               children: [
                 Icon(Icons.search, size: 100.0),
                 SizedBox(height: 40.0),
+                _TitleField(),
                 _MinPriceField(),
                 _MaxPriceField(),
                 SizedBox(height: 40.0),
@@ -87,6 +88,37 @@ class SearchFiltersView extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TitleField extends StatelessWidget {
+  late final SearchFilters filters;
+
+  @override
+  Widget build(BuildContext context) {
+    filters = context.appState.searchFilters!;
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(Icons.create),
+      title: TextFormField(
+        decoration: InputDecoration(
+          labelText: "Title",
+          hintText: "Filter listings by title",
+        ),
+        initialValue: filters.title,
+        keyboardType: TextInputType.text,
+        validator: (input) =>
+            input != null && input.isNotEmpty && input.length < 4
+                ? "You must enter at least four characters"
+                : null,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        onEditingComplete: () => FocusScope.of(context).nextFocus(),
+        onSaved: (input) {
+          if (input != null && input.length > 3) filters.title = input;
+        },
       ),
     );
   }

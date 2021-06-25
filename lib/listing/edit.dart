@@ -2,24 +2,24 @@ part of listing;
 
 class EditListing extends StatelessWidget {
   final Widget title;
-  final Builder builder;
+  final Widget Function(BuildContext) builder;
 
   EditListing.create()
       : title = const Text("Create Listing"),
-        builder = Builder(builder: (_) => _Create());
+        builder = ((_) => _Create());
   EditListing.update(Listing listing)
       : title = const Text("Update Listing"),
-        builder = Builder(builder: (_) => _Update(listing));
+        builder = ((_) => _Update(listing));
 
   @override
   Widget build(BuildContext context) {
     return AuthenticationRequired(
-      child: Scaffold(
+      builder: (_) => Scaffold(
         appBar: AppBar(title: title, centerTitle: true),
         body: SingleChildScrollView(
           child: Container(
             padding: EdgeInsets.symmetric(vertical: 50.0, horizontal: 25.0),
-            child: builder.build(context),
+            child: builder(context),
           ),
         ),
       ),

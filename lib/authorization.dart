@@ -6,16 +6,15 @@ import 'package:quicksell_app/extensions.dart';
 import 'package:quicksell_app/state.dart' show AppState;
 
 class AuthenticationRequired extends StatelessWidget {
-  final Widget child;
+  final Widget Function(BuildContext) builder;
 
-  AuthenticationRequired({required this.child});
+  AuthenticationRequired({required this.builder});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AppState>(
       builder: (context, userState, child) =>
-          userState.authenticated ? child! : _Authorization(),
-      child: child,
+          userState.authenticated ? builder(context) : _Authorization(),
     );
   }
 }

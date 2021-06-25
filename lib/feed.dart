@@ -5,19 +5,26 @@ import 'package:quicksell_app/listing/lib.dart' show Listing, ListingCard;
 import 'package:quicksell_app/profile/lib.dart' show Profile;
 
 class SearchFilters with ChangeNotifier {
+  String? title;
   int? minPrice;
   int? maxPrice;
   String? category;
-  Profile? seller;
+  String? sellerUuid;
+  String? orderBy;
 
-  SearchFilters({this.minPrice, this.maxPrice, this.category, this.seller});
+  SearchFilters();
+  SearchFilters.byProfile(Profile profile)
+      : sellerUuid = profile.uuid,
+        orderBy = '-ts_spawn';
 
-  Map<String, String> toDict() {
+  Map<String, String> toJson() {
     return {
+      if (title != null) 'title': title!,
       if (minPrice != null) 'min_price': minPrice.toString(),
       if (maxPrice != null) 'max_price': maxPrice.toString(),
       if (category != null) 'category': category!,
-      if (seller != null) 'seller': seller!.uuid,
+      if (sellerUuid != null) 'seller': sellerUuid!,
+      if (orderBy != null) 'order_by': orderBy!
     };
   }
 
@@ -64,7 +71,7 @@ class _FeedState extends State<Feed> {
     try {
       final newItems = await context.api.getListings(
         pageKey,
-        widget.filters?.toDict(),
+        widget.filters?.toJson(),
       );
       if (mounted)
         newItems.isNotEmpty
