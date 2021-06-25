@@ -1,5 +1,18 @@
 part of chat;
 
+class ChatList extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Chats"),
+        centerTitle: true,
+      ),
+      body: ChatListBody(),
+    );
+  }
+}
+
 class ChatListBody extends StatefulWidget {
   @override
   _ChatListBodyState createState() => _ChatListBodyState();
