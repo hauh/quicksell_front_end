@@ -15,7 +15,7 @@ class Listing with ChangeNotifier {
   Location location;
   bool conditionNew;
   String? characteristics;
-  List<dynamic>? photos;
+  Image photos;
   bool closed;
 
   Listing.fromJson(Map<String, dynamic> json)
@@ -32,7 +32,7 @@ class Listing with ChangeNotifier {
         location = Location.fromJson(json['location']),
         conditionNew = json['is_new'],
         characteristics = json['properties'],
-        photos = null,
+        photos = ListingImage.random(),
         seller = Profile.fromJson(json['seller']),
         closed = false;
 
@@ -105,5 +105,25 @@ class ListingFormData {
     category = null;
     price = null;
     conditionNew = null;
+  }
+}
+
+class ListingImage {
+  static final randomizer = Random();
+
+  static Image random() {
+    return Image.network(
+      "https://source.unsplash.com/random/"
+      "${195 + randomizer.nextInt(10)}x"
+      "${195 + randomizer.nextInt(10)}",
+    );
+  }
+
+  static Image randomBig() {
+    return Image.network(
+      "https://source.unsplash.com/random/"
+      "${475 + randomizer.nextInt(50)}x"
+      "${475 + randomizer.nextInt(50)}",
+    );
   }
 }

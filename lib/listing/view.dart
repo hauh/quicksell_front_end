@@ -22,7 +22,7 @@ class _CardState extends State<ListingCard> {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        leading: Icon(Icons.no_photography),
+        leading: listing.photos,
         title: Text(listing.title),
         subtitle: Text(listing.category),
         trailing: Text(context.appState.currency(listing.price)),
@@ -160,8 +160,7 @@ class _Gallery extends StatelessWidget {
   _Gallery(this.photos);
 
   @override
-  Widget build(BuildContext _) =>
-      Image(image: AssetImage('assets/no_image.png'));
+  Widget build(BuildContext _) => photos;
 }
 
 class _Price extends StatelessWidget {
